@@ -27,3 +27,77 @@
 递增运算符`++` 、递减运算符`--` ，前置版本将对象本身作为左值返回，后置版本则将对象原始值的副本作为右值返回。
 
 尽量使用前置版本，因为前置版本避免了不必要的工作，它把值加1后直接返回改变了的运算对象，与之相比，后置版本需要将原始值存储下来以便返回这个未修改的内容，对于相对复杂的迭代器类型，这种额外的工作消耗巨大。
+
+### 7. 移位运算符
+
+左移运算符`<<` 、右移运算符`>>` 
+
+首先令左侧运算对象的内容按照右侧运算对象的要求移动指定位数，然后将经过移动（可能还进行了提升）左侧对象的拷贝作为求值结果。移出边界之外的位就被舍弃的掉了。
+
+### 8. char参加位运算
+
+因为位运算只能作用于整数类型的运算对象，所以char参与位运算首先提升成int类型再参与位运算。
+
+### 9. sizeof
+
+返回一条表达式或一个类型名字所占的字节数。所得值是一个size_t类型的常量表达式。
+
+可以使用作用域运算符`::`来获取类成员的大小。
+
+```c++
+Sales_data data;
+sizeof data.revenue;
+sizeof Sales_data::revenue;
+```
+
+对数组执行sizeof运算得到整个数组所占空间的大小；对string或vector对象执行sizeof运算只返回该类行固定部分的大小，不会计算对象中的元素占了多少空间。
+
+### 10. 获取数组元素个数
+
+```c++
+constexpr size_t sz = sizeof(arr) / sizeof(*arr);
+```
+
+### 11. 命名的强制类型转换
+
+`cast_name<type>(expression)`
+
+`type` 是转换的目标类型，`expression` 是要转换的值
+
+`cast_name` 包括`static_cast` 、`dynamic_cast`、`const_cast`、`reinterpret_cast`
+
+#### 11.1 static_cast
+
+任何具有明确定义的类型转换，只要不包含底层const，都可以使用static_cast
+
+```c++
+double slope = static_cast<double>(j) / i;
+```
+
+可以使用static_cast找回存于`void*` 指针中的值
+
+```c++
+void *p = &d;
+double *dp = static_cast<double*>(p);
+```
+
+#### 11.2 dynamic_cast
+
+支持运行时类型识别
+
+#### 11.3 const_cast
+
+常常用于由函数重载的上下文中
+
+只能改变运算对象的底层const，可用于将常量对象转换成非常量对象（去掉const性质）
+
+```c++
+const char *pc;
+char *p = const_cast<char*>(pc);
+```
+
+但是通过p写值是非定义的行为。
+
+#### 11.4 reinterpret_cast
+
+通常为运算对象的位模式提供较低层次上的重新解释，reinterpret_cast本质上依赖于机器，要想安全地使用它必须对涉及的类型和编译器实现转换的过程都非常了解。
