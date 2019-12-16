@@ -118,7 +118,37 @@ int main() {
   decltype(odd) *func(int i);	//返回一个指向数组的指针
   ```
 
-  
+
+### 12. 重载函数
+
+同一个作用域内的几个函数名字相但形参列表（类型或数量）不同，称之为重载函数。
+
+调用这些函数时，编译器会根据传递的实参类型推断想要的是哪个函数。
+
+main函数不能重载。
+
+### 13. 重载和const函数 
+
+顶层const不影响传入函数的对象
+
+```c++
+Record lookup(Phone);	Record lookup(const Phone);	//等价（普通变量与常量）
+Record lookup(Phone*);	Record lookup(Phone *const)	//等价（普通指针与常量指针）
+```
+
+如果形参是某种类型的指针或引用，则通过区分其指向的是常量对象还是非常量对象可以实现函数重载，此时的const是底层的
+
+```c++
+Record lookup(Account&);			//函数作用于Account的引用
+Record lookup(const Account&);		//新函数，作用于常量引用
+```
+
+```c++
+Record lookup(Account*);			//作用于指向Account的指针
+Record lookup(const Account*)		//新函数，作用于指向常量的指针
+```
+
+
 
 
 
