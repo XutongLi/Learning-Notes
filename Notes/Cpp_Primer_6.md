@@ -148,6 +148,132 @@ Record lookup(Account*);			//作用于指向Account的指针
 Record lookup(const Account*)		//新函数，作用于指向常量的指针
 ```
 
+### 14. 函数调用的一系列工作
+
+- 调用前要险保存寄存器，并在返回时恢复
+- 可能需要拷贝实参
+- 程序转向一个新的位置继续进行
+
+### 15. 内联函数
+
+将函数指定为内联函数，通常就是将它在每个调用点上“内联”地展开。内联机制用于优化规模较小、流程直接、频繁调用的函数。
+
+### 16. constexpr函数
+
+constexpr是指能用于常量表达式的函数。函数的返回值和所有形参都得是字面值类型，而且函数中必须有且只有一条return语句。
+
+```c++
+constexpr int new_sz() {return 42;}
+constexpr int foo = new_sz();	
+```
+
+执行该初始化任务时，编译器把对constexpr函数的调用替换成其结果值。为了能在编译过程中展开，constexpr函数被隐式地指定为内联函数。
+
+### 17. 内联函数和constexpr函数放在头文件
+
+与其他函数不同，内联函数和constexpr函数可以在程序中多次定义，多次定义必须一致，所以通常定义在头文件中。
+
+### 18. assert预处理宏
+
+`assert` 是一种预处理宏，定义在`cassert` 头文件中，是一种预处理变量，由预处理器管理。
+
+它使用一个表达式作为条件：
+
+```c++
+assert(expr);
+```
+
+若表达式为假（0），则assert输出信息并终止程序的运行；如果表达式为真（非0），assert什么都不做。
+
+assert的行为依赖于一个名叫**NDEBUG** 的预处理变量的状态。定义`#define NDEBUG` 可以关闭调试状态，或者编译时指定`g++ -D NDEBUG main.cpp` 
+
+### 19. 函数指针
+
+#### 声明函数指针
+
+```c++
+bool lenCmp(const string &, const string &);
+bool (*pf)(const string &, const string &);	//指向上述函数的指针（未初始化）
+bool *pf(const string &, const string &);	//声明一个名为pf的函数，该函数返回bool*（防混淆）
+```
+
+#### 使用函数指针
+
+当我们把函数名作为一个值使用时，该函数自动地转换成指针。
+
+```c++
+pf = lenCmp;	//pf指向名为lenCmp的函数
+pf = &lenCmp;	//等价，取地址符是可选的
+```
+
+还可以直接使用指向函数的指针调用该函数，无需提前解引用指针
+
+```c++
+bool b1 = pf("hello", "hi");
+bool b2 = (*pf)("hello", "hi");
+bool b3 = lenCmp("hello", "hi");	//三者等价
+```
+
+#### 函数指针形参
+
+形参可以是指向函数的指针，此时形参看起来是函数类型，实际上却是当成指针使用。
+
+```c++
+void use(const string &s, bool pf(const string &, const string &));
+void use(const string &s, bool (*pf)(const string &, const string &));	//两者等价
+```
+
+调用use函数时，可以直接把函数作为实参使用，此时它会自动转换成指针
+
+```c++
+use(s1, lenCmp);
+```
+
+通过`typedef` 或`decltype` 简化函数指针使用
+
+```c++
+typedef bool func(const string&, const string &);
+typedef decltype(lenCmp) func2;		//两者等价
+typedef bool(*funcp)(const string &, const string &);
+typedef decltype(lenCmp) *funcp2;	//两者等价
+//use等价声明
+void use(const string &s1, func);
+void use(const string &s1, funcp2);
+```
+
+#### 返回指向函数的指针
+
+必须把返回类型写成指针形式，编译器不会自动地将函数返回类型当成对应的指针类型处理。
+
+```c++
+using F = int(int *, int);		//F是函数类型
+using PF = int(*)(int *, int);	//PF是指针类型
+//返回函数指针的函数声明
+PF f1(int);
+F *fi(int);		
+int (*f1(int))(int *, int);
+auto f1(int) -> int (*)(int *, int);	//尾置返回类型
+decltype(lenCmp) *getFcn(const String &);	//当明确返回函数类型时，可以使用decltype关键字（当decltype作用于某个函数时，它返回函数类型而不是指针，所以要显示加上*以表明返回指针）
+```
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
