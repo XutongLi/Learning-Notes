@@ -113,11 +113,126 @@ swap(svec1, svec2);		//swap只是交换了两个容器的内部数据结构
 
 与其他容器不同，对一个string调用swap会导致迭代器、引用和指针失效。
 
+### 5. 顺序容器添加元素
 
+#### push_back
 
+除array和forward_list之外，每个顺序容器（包括string类型）都支持push_back。
 
+当我们用一个对象来初始化容器时，或将一个对象插入到容器中时，实际上放入到容器中的是对象值的一个拷贝，而不是对象本身。
 
+#### push_front
 
+list\forward_list和deque容器还支持push_front操作，将元素插入到容器头部。
+
+#### insert
+
+insert允许我们在容器任意位置插入0个或多个元素。vector、list、string和forward_list都支持insert。
+
+insert接受一个迭代器作为第一个参数。迭代器指出了在容器中什么位置放置新元素（包括尾部下一个位置）。
+
+insert将元素插入到迭代器所指定的位置之前。
+
+将元素插入到vector、deque和string中的任何位置都是合法的，但是可能很耗时。
+
+```c++
+vector<string> svec;
+list<string> sl;
+sl.insert(sl.begin(), "hi");	//等价于sl.push_front("hi");
+svec.insert(svec.begin(), "hi");	//vector不支持push_front，但是可以使用insert插入头部
+```
+
+#### insert插入范围内元素
+
+```c++
+svec.insert(svec.end(), 10, "a");	//将十个"a"插入到svec末尾
+vector<string> v = {"a", "b", "c", "d"};
+svec.insert(svec.begin(), v.end() - 2, v.end());	//通过一对迭代器范围插入
+svec.insert(svec.begin(), {"a", "b"});		//通过初始化列表范围插入
+svec.insert(svec.begin(), svec.begin(), svec.end());	//错误，迭代器不能指向与目的位置相同的容器
+```
+
+insert返回值为指向插入的第一个元素的迭代器，通过insert的返回值，可以在容器中一个特定位置反复插入元素。
+
+```c++
+list<string> l;
+auto iter = l.begin();
+while (cin >> word)
+    iter = insert(iter, word);
+```
+
+#### emplace
+
+emplace、emplace_front和emplace_back构造而不是拷贝元素。
+
+当调用insert或push时，将元素类型的对象传递给它们，这些对象被拷贝到容器中。调用emplace时，将参数传递给元素类型的构造函数，emplace成员使用这些参数在容器管理的内存中直接构造元素。
+
+emplace函数的参数根据元素类型而变化，参数必须与元素类型的构造函数相匹配。
+
+```c++
+c.emplace();	//使用Sales_data的默认构造函数
+c.emplace(iter, "999-777-444");	//使用Sales_data(string)
+c.emplace_front("987-123-444", 25, 15.99);	//使用Sales_data(string, int double)
+```
+
+### 6. 顺序容器访问元素
+
+包括array在内的每个顺序容器都有一个 `front` 成员函数，而除forward_list之外的所有顺序容器都有一个 `back` 成员函数。这两个操作分别是返回首元素和尾元素的 **引用** 。
+
+下标操作：
+
+```c++
+vector<int> v;
+cout << v[n];	//返回下标为n的元素的引用，若n越界，则函数行为未定义
+cout << v.at(n);	//返回下标为n的元素的引用，若n越界，抛出一个out_of_range异常
+```
+
+### 7. 顺序容器元素删除
+
+#### pop_front和pop_back
+
+pop_back和pop_front分别删除尾元素和首元素。
+
+vector和string不支持pop_front，forward_list不支持pop_back
+
+#### erase
+
+成员函数erase从容器中指定位置删除元素。可以删除由一个迭代器指定的单个元素，也可以删除由一对迭代器指定的范围内的所有元素。两种形式的erase都返回指向删除的（最后一个）元素之后位置的迭代器。
+
+#### clear
+
+删除容器中的所有元素。
+
+### 8. forward_list操作
+
+`before_begin()` ：返回链表首元素之前不存在的元素的迭代器
+
+`insert_after(p, t)` ：在迭代器p之后的位置插入元素t，返回一个指向最后一个插入元素的迭代器。
+
+`insert_after(p, n, t)` ：n是数量
+
+`insert_after(p, b, e)` ：b和e是一对迭代器
+
+`insert_after(p, il)` ：li是一个花括号列表
+
+`emplace_after(p, args)` ：使用args在p指定的位置之后创建一个元素，返回一个指向这个新元素的迭代器
+
+`erase_after(p)` ：删除p指向的位置之后的元素，返回一个指向被删元素之后元素的迭代器
+
+`erase_after(b, e)` ：删除b之后到e之前（不包含）的元素
+
+### 9. 不要保存end返回的迭代器
+
+添加或删除元素的循环程序必须反复调用end，而不能在循环之前保存end返回的迭代器。
+
+```c++
+auto begin = v.begin();
+while (begin != v.end()) {
+    ++ begin;
+    begin = v.insert(begin, 42);
+    ++ begin;
+}
+```
 
 
 
