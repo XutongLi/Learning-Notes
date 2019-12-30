@@ -213,7 +213,7 @@ vector和string不支持pop_front，forward_list不支持pop_back
 
 `insert_after(p, b, e)` ：b和e是一对迭代器
 
-`insert_after(p, il)` ：li是一个花括号列表
+`insert_after(p, il)` ：il是一个花括号列表
 
 `emplace_after(p, args)` ：使用args在p指定的位置之后创建一个元素，返回一个指向这个新元素的迭代器
 
@@ -234,7 +234,31 @@ while (begin != v.end()) {
 }
 ```
 
+### 10. vector对象增长
 
+当操作需求超出vector的容量时，vector重新分配内存空间。每次需要分配新内存空间时将当前容量翻倍。
+
+### 11. string转double
+
+```c++
+double d = stod(s);
+```
+
+`string` 参数可以以+、- 或数字开头，也可以以0x或0X开头来表示十六进制数。也可以以小数点 (.) 开头，并可以包含e或者E来表示指数部分。
+
+如果string不能转换为一个数值，函数将抛出 `invalid_argument` 异常如果转换得到的数值无法用任何类型来表示，则抛出一个 `out_of_range` 异常。
+
+### 12. 容器适配器
+
+适配器是一种机制，能使某种事物的行为看起来像另外一种事物一样。
+
+默认情况下，`stack` 和 `queue` 是基于deque实现的，`priority_queue` 是在vector上实现的。
+
+可以在chungking一个适配器时将一个命名的顺序容器作为第二个类型参数来重载默认容器类型。
+
+```c++
+stack<int, vector<int>> st;	//在vector上实现的空栈
+```
 
 
 
