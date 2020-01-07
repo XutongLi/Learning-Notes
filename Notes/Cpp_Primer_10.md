@@ -148,7 +148,7 @@ ostream &print(ostream &os, const string &s, char c) {
 for_each(words.begin(), words.end(), bind(print, ref(os), _1, ' '));
 ```
 
-函数 `ref` 返回一个对象，包含给定的引用，此对象是可拷贝的。`cref` 函数生成一个保存const引用的类。两个函数定义在头文件 `functional` 中。
+函数 `ref` 从一个指向不能拷贝的类型的对象的引用生成一个可拷贝的对象。`cref` 函数生成一个保存const引用的类。两个函数定义在头文件 `functional` 中。
 
 ### 7. 插入迭代器
 
@@ -174,7 +174,25 @@ copy(lst.begin(), lst.end(), front_inserter(lst2));	//lst2为4 3 2 1
 copy(lst.begin(), lst.end(), inserter(lst3, lst3.begin()));	//lst3为1 2 3 4
 ```
 
+### 8. 反向迭代器
 
+反向迭代器是在容器中从尾元素向首元素反向移动的迭代器。递增一个反向迭代器 `++it` 会移动到前一个元素，而递减一个反向迭代器 `--it` 会移动到下一元素。
+
+除forward_list之外，其他容器都支持反向迭代器，可以通过调用 `rbegin` 、 `rend` 、`crbegin` 和 `crend` 成员函数来获得反向迭代器。
+
+不可以基于forward_list和流迭代器创建反向迭代器。
+
+```c++
+vector<int> vec = {0, 1, 2, 3, 4, 5, 6};
+for (auto riter = vec.crbegin(); riter != vec.crend(); ++ riter)
+    cout << *riter << endl;		//打印6543210
+
+sort(vec.rbegin(), vec.rend());		//逆序排序
+```
+
+
+
+ 
 
 
 
