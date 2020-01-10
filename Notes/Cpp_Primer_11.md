@@ -111,9 +111,35 @@ for (auto pos = authors.equal_range(item); pos.first != pos.second; ++ pos.first
     cout << pos.first->second << endl;
 ```
 
+### 7. 无序容器
 
+#### 组织
 
+无序关联容器不是使用比较运算符来组织元素的，而是使用一个 `哈希函数` 和关键字类型的 `==` 运算符。
 
+无序容器在存储上组织为一个桶，每个桶保存零个或多个元素。使用一个哈希函数将元素映射到桶。容器将具有一个特定哈希值的所有元素都保存在相同的桶中。
+
+无序容器的性能依赖于哈希函数的质量和桶的数量和大小。
+
+为了访问一个元素，容器首先计算元素的哈希值，它指出应该搜索哪个桶。当一个桶保存多个元素时，需要顺序搜索这些元素来查找想要的那个。
+
+无序容器中，具有相同关键字的元素都是相邻存储的。
+
+#### 关键字类型
+
+可以定义关键字是内置类型（包括指针）、string以及智能指针类型的无序容器。不能直接定义关键字类型为自定义类类型的无序容器。
+
+为将自定义类型作为关键字，需提供函数来替代 `==` 运算符和哈希值计算函数。
+
+```c++
+size_t hasher(const Sales_data &sd) {
+    return hash<string>()(sd.isbn());
+}
+bool eqOp(const Sales_data &lhs, const Sales_data &rhs) {
+    return lhs.isbn() == rhs.isbn();
+}
+uordered_multiset<Sales_data, decltype(hasher)*, decltype(eqOp)*> bookstore(42, hasher, eqOp);
+```
 
 
 
