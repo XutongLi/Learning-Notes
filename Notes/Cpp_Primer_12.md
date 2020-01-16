@@ -188,6 +188,70 @@ process(p);	//引用计数为2
 int i = *p;	//正确，引用计数值为1
 ```
 
+### 8. shared_ptr管理非new分配内存的资源
+
+定义删除器函数来完成对shared_ptr中保存的指针进行释放的操作。
+
+```c++
+void end_connection(connection *p)	{ disconnect(*p); }
+void f(destination &d) {
+    connection c = connect(&d);
+    shared_ptr<connection> p(&c, end_connection);
+    //使用连接
+    //当f退出时（即使是由于异常退出），connection会被正确关闭
+}
+```
+
+### 9. unique_ptr
+
+某个时刻只能有一个unique_ptr指向一个给定对象。当unique_ptr被销毁时，它所指向的对象也被销毁。
+
+与shared_ptr不同，没有类似make_shared的标准库函数返回一个unique_ptr。当定义一个unique_ptr时，需要将其绑定到一个new返回的指针上。unique_ptr不支持普通的拷贝或赋值操作。
+
+```c++
+unique_ptr<int> p2(new int(24));
+```
+
+可以通过调用`release` 或者 `reset` 将指针的所有权从一个（非const）unique_ptr转移给另一个unique_ptr：
+
+```c++
+unique_ptr<int> p2(p1.release());	//将所有权从p1转给p2，p1被release置为空
+p2.reset(p3.release());	//将所有权从p3转给p2，reset释放了p2原来指向的内存
+```
+
+向unique_ptr传递删除器用法与shared_ptr有所不同
+
+```c++
+void f(destination &d) {
+    connection c = connect(&d);
+    unique_ptr<connection, decltype(end_connection)*> p(&c, end_connection);
+    //使用连接
+    //当f退出时（即使是由于异常退出），connection会被正确关闭
+}
+```
+
+### 10. weak_ptr
+
+`weak_ptr` 是一种不控制所指向对象生存期的智能指针，它指向由一个shared_ptr管理的对象。
+
+将一个weak_ptr绑定到一个shared_ptr不会改变对象的引用计数。一旦最后一个指向对象的shared_ptr被销毁，对象就会被释放（即使有weak_ptr指向对象）。
+
+当创建一个weak_ptr时，要用一个shared_ptr来初始化它：
+
+```c++
+auto p = make_shared<int>(24);
+weak_ptr<int> wp(p);	//wp弱共享p，p的引用计数未改变
+```
+
+由于对象可能不存在，所以不可以使用weak_ptr直接访问对象，而必须调用lock。此函数调查weak_ptr所指向的对象是否存在，若存在，返回一个指向共享对象的shared_ptr。
+
+```c++
+if (shared_ptr<int> np = wp.lock()) {//若np不为空则条件成立
+    //只有当lock返回true才进入if语句体，
+    //if中，np与wp共享对象
+}
+```
+
 
 
 
