@@ -252,7 +252,92 @@ if (shared_ptr<int> np = wp.lock()) {//若np不为空则条件成立
 }
 ```
 
+**作用描述** ：使用weak_ptr不会影响它所指向对象的生存期，但可以阻止用户访问一个不再存在的对象的企图。
 
+### 11. 动态数组——new
+
+#### 概念
+
+需要一次为很多对象分配内存的情况下，使用 `new` 表达式可以分配并初始化一个对象数组。（一般情况下使用标准库容器更好，容器更为简单、不容易出现内存管理错误并有更好的性能）。
+
+`new` 将内存分配和对象构造组合在一起，`delete` 将对象析构和内存释放组合在一起。
+
+#### 定义与初始化
+
+```c++
+int *a = new int[get_size()];	//方括号中数目可以不为常量，a返回指向第一个int的指针
+```
+
+当用new分配一个数组时，并未得到一个数组类型的对象，而是得到一个数组元素类型的指针。所以不能对动态数组调用begin或end，也不能使用范围for循环语句来处理动态数组中的元素。
+
+默认情况下，new分配的对象，无论是单个分配的对象还是数组中的，都是默认初始化的。
+
+```c++
+string *p = new string[10];	//默认初始化，10个空string
+string *p2 = new string[10]();	//值初始化，10个空string
+string *p3 = new string[10]{"a", "b", "c"};	//列表初始化，剩余元素值初始化
+```
+
+#### 释放动态数组
+
+```c++
+delete [] p;	//p必须指向一个动态分配的数组或为空
+```
+
+上述语句销毁p指向的数组中的元素，并释放对应的内存。数组中元素按逆序销毁，即，最后一个元素先被销毁，然后是倒数第二个，以此类推。
+
+若少了方括号，其行为是未定义的。
+
+#### 智能指针和动态数组
+
+可用 `unique_ptr` 管理new分配的数组。
+
+```c++
+unique_ptr<int[]> up(new int[10]);	//up指向一个包含10个未初始化int的数组
+for (size_t i = 0; i != 10; ++ i)	//可使用下标运算符访问数组中元素
+    up[i] = i;
+up.release();	//自动用delete销毁其指针
+```
+
+### 12. 动态数组——allocator类
+
+标准库 `allocator` 类定义在头文件memory中，它将内存分配和对象构造分离。
+
+```c++
+allocator<string> alloc;	//可以分配string的allocator对象
+auto const p = alloc.allocate(n);	//分配n个未初始化的string
+```
+
+allocator分配的内存是未构造的，要在此内存中通过 `construct` 成员函数构造对象：
+
+```c++
+auto q = p;	//q指向最后构造的元素之后的位置
+alloc.construct(q ++);	//*q为空串
+alloc.construct(q ++, 10, 'c');	//*q为 "ccc"
+alloc.construct(q ++, "hi");	//*q为 "hi"
+```
+
+用完对象后，必须对每个构造函数调用 `destroy` 来销毁它们。函数destroy接收一个指针，对指向的对象执行析构函数：
+
+```c++
+while (q != p) 
+	alloc.destroy(-- q);	//释放构造的string
+```
+
+元素被销毁后，可以重新使用这部分内存来保存其他string，也可以将其归还给系统。释放内存通过 `deallocate` 来完成：
+
+```c++
+alloc.deallocate(p, n);
+```
+
+拷贝与填充：
+
+```c++
+//将vi扩充原来大小一半，拷贝vi至新数组，并将多出空间填充为42
+auto p = alloc(vi.size() * 2);
+auto p = uninitialized_copy(vi.begin(), vi.end(), p);
+uinitialized_fill_n(q, vi.size(), 42);
+```
 
 
 
