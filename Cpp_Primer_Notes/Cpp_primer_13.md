@@ -73,6 +73,8 @@ Sales_data &Sales_data::operator=(const Sales_data &rhs) {
 }
 ```
 
+**Tip** ：拷贝赋值运算符执行拷贝构造函数和析构函数的工作。
+
 ### 5. 析构函数
 
 **构造函数** ：初始化对象的非static数据成员
