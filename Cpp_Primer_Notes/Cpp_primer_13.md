@@ -24,6 +24,12 @@ public:
 
 如果没有为一个类定义拷贝构造函数，编译器会定义一个。合成拷贝构造函数会将其参数的成员逐个拷贝到正在创建的对象中。
 
+```c++
+//与Sales_data的合成拷贝构造函数等价
+Sales_data::Sales_data(const Sales_data &orig):
+	bookNo(orig.bookNo), units(orig.units), revenue(orig.revenue) {}
+```
+
 #### 拷贝初始化
 
 直接初始化与拷贝初始化之间的 **差异** ：`直接初始化` 要求编译器使用普通函数匹配来选择构造函数；`拷贝初始化` 则是要求编译器将右侧运算对象拷贝到正在创建的对象中，如需要还要进行类型转换。拷贝初始化通过 `拷贝构造函数` 或 `移动构造函数` 来完成。
@@ -192,6 +198,99 @@ int &&rr3 = std::move(rr1);	//正确
 调用了move，就只能对移后源对象rr1赋值和销毁，不能再使用它的值。
 
 对move不提供using声明，直接调用 `std::move` 。
+
+#### 移动构造函数
+
+移动构造函数的第一个参数是该类型的一个右值引用，其他额外的参数都必须有默认实参。
+
+资源移动完成后，源对象不再指向被移动的资源，这些资源的所有权已经归属新创建的对象。此时，移后源对象处于这样一个状态——销毁它是无害的。
+
+```c++
+class StrVec {
+public:
+    StrVec(StrVec&&) noexcept;
+};
+//成员初始化结果s中的资源
+//移动操作不应抛出任何异常
+StrVec::StrVec(StrVec &&s) noexcept 
+    : elements(s.elements), first_free(s.first_free), cap(s.cap) {
+        s.elements = s.first_free = s.cap = nullptr;
+    }
+```
+
+与拷贝构造函数不同，移动构造函数不分配新内存，它直接接管给定的StrVec的内存。接管内存后，将给定对象中的指针置为nullptr，完成给定对象的移动操作。
+
+####  移动赋值运算符
+
+```c++
+StrVec &StrVec::operator=(StrVec &&rhs) noexcept {
+    if (this != &rhs) {
+        free();	//释放已有元素
+        elements = rhs.elements;	//从rhs接管资源
+        first_free = rhs.elements;	
+        cap = rhs.cap;
+        rhs.elements = rhs.first_free = rhs.cap = nullptr;
+    }
+    return *this;
+}
+```
+
+#### 合成的移动构造函数和移动赋值运算符
+
+只有当一个类没有定义任何自己版本的拷贝控制成员，且类的每个非static数据成员都能移动构造或移动赋值时，编译器才会为它合成移动构造函数或移动赋值运算符。
+
+```c++
+struct X {
+    int i;			//内置类型可以移动
+    std::string s;	//string定义了自己的移动操作
+};
+struct hasX {
+    X mem;	//X有合成的移动操作
+};
+X x, x2 = std::move(x);			//使用合成的移动构造函数
+hasX hx, hx2 = std::move(hx);	//使用合成的移动构造函数
+```
+
+#### 移动构造函数和拷贝构造函数同时存在
+
+如果一个类既有移动构造函数，也有拷贝构造函数，编译器使用普通的函数匹配规则确定使用哪个构造函数。
+
+```c++
+StrVec v1, v2;	
+v1 = v2;		//v2是左值，使用拷贝赋值
+StrVec getVec(istream &);	//返回一个右值
+v2 = getVec(cin);		//getVec(cin)返回一个右值，所以使用移动赋值
+```
+
+但如果定义了拷贝构造函数，没定义移动构造函数，右值也被拷贝：
+
+```c++
+class Foo {
+public:
+    Foo() = default;
+    Foo(const Foo&);	//拷贝构造函数
+    //未定义移动构造函数
+};
+Foo x;
+Foo y(x);				//拷贝构造函数，x是一个左值
+Foo z(std::move(x));	//拷贝构造函数，因为未定义移动构造函数
+```
+
+#### 三五法则
+
+一般来说，如果一个类定义了任何一个拷贝操作，它就应该定义所有五个操作。（拷贝构造函数、拷贝赋值运算符、移动构造函数、移动赋值运算符、析构函数）。
+
+#### 移动迭代器
+
+一个移动迭代器通过改变给定迭代器的解引用运算符的行为来适配此迭代器。移动迭代器的解引用运算符生成一个右值引用。（一般迭代器解引用运算符返回一个指向元素的左值）。
+
+标准库的 `make_move_iterator` 函数将一个普通迭代器转换为一个移动迭代器。此函数接受一个迭代器参数，返回一个移动迭代器。
+
+```c++
+auto last = uninitialized_copy(make_move_iterator(old.begin()), make_move_iterator(old.end()), new_vec.begin());
+```
+
+uninitialized_copy对输入序列的每一个元素调用construct函数，construct函数在此例中将使用移动构造函数来构造元素。
 
 
 
