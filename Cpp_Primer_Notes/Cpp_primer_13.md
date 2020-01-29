@@ -276,6 +276,8 @@ Foo y(x);				//拷贝构造函数，x是一个左值
 Foo z(std::move(x));	//拷贝构造函数，因为未定义移动构造函数
 ```
 
+**区别**：移动构造函数和移动赋值运算符接受一个（通常是非const的）右值引用；而拷贝版本则接受一个（通常是const）的普通左值引用。；
+
 #### 三五法则
 
 一般来说，如果一个类定义了任何一个拷贝操作，它就应该定义所有五个操作。（拷贝构造函数、拷贝赋值运算符、移动构造函数、移动赋值运算符、析构函数）。
@@ -295,6 +297,52 @@ uninitialized_copy对输入序列的每一个元素调用construct函数，const
 #### 安全性
 
 当调用 `std::move` 时，必须确认移后源对象没有其他用户。
+
+### 9. 普通成员函数的拷贝和移动版本
+
+区分移动和拷贝的重载函数通常有一个版本接受一个 `const T&` （指向const的左值引用），而另一个版本接受一个 `T&&` （指向非const的右值引用）。
+
+```c++
+class StrVec {
+public:
+    void push_back(const std::string&);	//拷贝元素
+    void push_back(std::string&&);		//移动元素
+};
+void StrVec::push_back(const string &s) {
+    alloc.construct(first_free ++, s);
+}
+void StrVec::push_back(string &&s) {
+    alloc.construct(first_fre ++, std::move(s));
+}
+```
+
+### 10. 右值和左值引用成员函数
+
+在参数列表后放置一个 **引用限定符** `&` 或 `&&` 分别指出this可指向一个左值或右值。
+
+```c++
+class Foo {
+public:
+    Foo &operator=(const Foo&) &;	//只能向可修改的左值赋值
+};
+Foo &Foo::operator=(const Foo &rhs) & {
+    //拷贝操作
+    return *this;
+}
+```
+
+引用限定符只能用于非static成员函数，且必须同时出现在函数的声明和定义当中。
+
+一个函数如果同时有const的引用限定，引用限定符跟在const限定符之后：
+
+```c++
+class Foo {
+public:
+    Foo someMem() const &;
+};
+```
+
+引用限定符也可以用来区分重载版本。如果一个成员函数有引用限定符，则具有相同参数列表的所有版本都必须有引用限定符。
 
 
 
