@@ -292,6 +292,10 @@ auto last = uninitialized_copy(make_move_iterator(old.begin()), make_move_iterat
 
 uninitialized_copy对输入序列的每一个元素调用construct函数，construct函数在此例中将使用移动构造函数来构造元素。
 
+#### 安全性
+
+当调用 `std::move` 时，必须确认移后源对象没有其他用户。
+
 
 
 
