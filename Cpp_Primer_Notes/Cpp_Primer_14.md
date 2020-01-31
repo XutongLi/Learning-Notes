@@ -74,6 +74,152 @@ istream &operator>>(istream &is, Sales_data &item) {
 
 输入运算符必须处理输入可能失败的情况，而输出运算符不需要。
 
+### 3. 算术和关系运算符
+
+算术和关系运算符一般定义为非成员函数以允许对左右侧的运算对象进行转换。形参为常量引用。
+
+#### 算术运算符
+
+如果类同时定义了算术运算符和相关的复合赋值运算符，通常情况下使用复合赋值来实现算术运算符：
+
+```c++
+//复合赋值运算符（成员函数）
+Sales_data& Sales_data::operator+=(const Sales_data &rhs) {
+    units_sold += rhs.units_sold;
+    revenue += rhs.revenue;
+    return *this;
+}
+//算术运算符函数（非成员函数）
+Sales_data operator+(const Sales_data &lhs, const Sales_data &rhs) {
+    Sales_data sum = lhs;
+    sum += rhs;
+    return sum;	
+}
+```
+
+#### 相等运算符
+
+如果一个类定义了 `operator==` ，则这个类也应该定义 `operator!=` 。
+
+```c++
+bool operator==(const Sales_data &lhs, const Sales_data &rhs) {
+    return lhs.isbn() == rhs.isbn() && lhs.revenue == rhs.revenue;
+}
+bool operator!=(const Sales_data &lhs, const Sales_data &rhs) {
+    return !(lhs == rhs);
+}
+```
+
+#### 关系运算符
+
+如果存在唯一一种逻辑可靠的 `<` 定义，则应该考虑为这个类定义 `<` 运算符。如果类同时还包含 `==` ，则当且仅当 `<` 的定义和 `==` 产生的结果一致时才定义 `<` 运算符。
+
+#### 赋值运算符
+
+赋值运算符必须定义为成员函数，返回左侧运算对象的引用。
+
+除拷贝赋值运算符和移动赋值运算符外，还可以定义其他赋值运算符以使用别的类型作为右侧运算对象。
+
+```c++
+//花括号赋值
+StrVec &StrVec::operator=(initializer_list<string> il) {
+    auto data = alloc_n_copy(il.begin(), il.end());
+    free();		//同样要先释放自己的空间
+    elements = data.first;
+    first_free = cap = data.second;
+    return *this;
+}
+StrVec v = {"aaa", "bbb"};
+```
+
+### 4. 下标运算符
+
+表示容器的类一般定义下标运算符 `operator[]` ，用以通过位置访问元素。
+
+下标运算符必须是成员函数。
+
+```c++
+class StrVec {
+public:
+    string& operator[](size_t n)		//返回引用，可修改
+        return elements[n];
+    const string& operator[](size_t n) const	//返回常量引用，不可修改
+        return elements[n];
+};
+const StrVec cevc = svec;	//假设svec是一个StrVec对象
+svec[0] = "aaa";	//正确
+cvec[0] = "aaa";	//错误
+```
+
+### 5. 递增递减运算符
+
+定义递增递减运算符的类应该同时定义前置版本和后置版本。这些运算符通常应被定义为类的成员。
+
+#### 前置递增/递减运算符
+
+前置运算符返回递增或递减后对象的引用：
+
+```c++
+class StrBlobPtr {
+public:
+    StrBlobPtr& operator++();
+    StrBlobPtr& operator--();
+};
+StrBlobPtr& StrBlobPtr::operator++() {
+    check(curr, "error");	//若curr已到达容器尾后元素，则无法递增它
+    ++ curr;
+    return *this;
+}
+StrBlobPtr& StrBlobPtr::operator--() {
+    -- curr;	//若curr为0，继续递减产生一个无效下标
+    check(curr, "error");	//检查
+    return *this;
+}
+```
+
+#### 后置递增/递减运算符
+
+后置版本接收一个额外的（不被使用）的int类型的形参作为与前置版本的区分。编译器为这个形参提供一个值为0的形参。
+
+后置运算符应返回对象的原值（递增或递减之前的值），返回的形式是一个值而非引用。
+
+```c++
+class StrBlobPtr {
+public:
+    StrBlobPtr operator++(int);
+    STrBlobPtr operator--(int);
+};
+StrBlobPtr StrBlobPtr::operator++(int) {
+    StrBlobPtr ret = *this;	//记录之前的状态
+    ++ *this;	//调用前置运算符，检查在其中操作
+    return ret;	//返回之前的状态
+}
+StrBlobPtr StrBlobPtr::operator--(int) {
+    StrBlobPtr ret = *this;
+    -- *this;	
+    return ret;
+}
+```
+
+### 6. 成员访问运算符
+
+箭头运算符必须是类的成员。解引用运算符通常是类的成员。
+
+```c++
+class StrBlobPtr {
+public:
+    string& operator*() const {
+        auto p = check(curr, "error");
+        return (*p)[curr];	//*p是对象所指的vector
+    }
+    string* operator->() const {
+        return & this->operator*();	//调用解引用运算符并返回解引用结果元素的地址
+    }
+};
+```
+
+将这两个运算符定义成const成员，因为获取一个元素不会改变对象的状态。
+
 
 
  
