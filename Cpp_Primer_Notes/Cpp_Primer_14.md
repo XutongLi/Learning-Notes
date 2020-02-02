@@ -220,6 +220,62 @@ public:
 
 将这两个运算符定义成const成员，因为获取一个元素不会改变对象的状态。
 
+### 7. 函数调用运算符
+
+类重载了函数调用运算符，可以像使用函数一样使用该类的对象。
+
+函数调用运算符必须是成员函数。一个类可以定义多个不同版本的调用运算符，相互之间应该在参数数量或类型上有所区别。
+
+```c++
+struct absInt {
+    int operator()(int val) cosnt {
+        return val < 0 ? -val : val;		//返回绝对值
+    }    
+};
+int i = -42;
+absInt obj;		//obj称为函数对象
+int ui = obj(42);	//返回42
+```
+
+#### lambda是函数对象
+
+编写一个lambda表达式之后，编译器将该表达式翻译成一个未命名类的未命名对象。lambda表达式产生的类中含有一个重载的函数调用运算符。
+
+```c++
+stable_sort(words.begin(), words.end(),
+           [](const string &a, const string &b) {return a.size() < b.size();});
+//等价于：
+class ShorterString {
+public:
+    bool operator() (const string &s1, const string &s2) const {
+        return s1.size() < s2.size();
+    }
+};
+stable_sort(words.begin(), words.end(), ShorterString());
+```
+
+当一个lambda表达式 **通过引用捕获变量** 时，编译器可直接使用该引用而无需再lambda产生的类中将其存储为数据成员。
+
+**通过值捕获的变量** 被拷贝到lambda中，因此这种lambda产生的类必须为每个值捕获的变量建立对应的数据成员，同时创建构造函数，令其使用捕获的变量的值来初始化数据成员。
+
+```c++
+auto wc = find_if(words.begin(), words.end(),
+                 [sz](const string &a) {return a.size() >= sz;});
+//等价于：
+class SizeComp {
+public:
+    SizeComp(size_t n) : sz(n) {}
+    bool operator() (const string &s) const {
+        return s.size() >= sz;
+    }
+private:
+    size_t sz;
+};
+auto wc = find_if(words.begin(), words.end(), SizeComp(sz));
+```
+
+
+
 
 
  
