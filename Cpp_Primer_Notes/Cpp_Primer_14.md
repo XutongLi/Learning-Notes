@@ -274,6 +274,62 @@ private:
 auto wc = find_if(words.begin(), words.end(), SizeComp(sz));
 ```
 
+### 8. 类型转换运算符
+
+类型转换运算符负责将一个类类型的值转换成其他类型。
+
+一般形式 `operator type() const;`
+
+一个类型转换函数必须是类的成员函数；它不能声明返回类型，形参列表也必须为空。类型转换函数通常为const。
+
+```c++
+class SmallInt {
+public:
+    SmallInt(int i = 0) : val(i) {}
+    operator int() const { return val; }
+private:
+    size_t val;
+};
+SmallInt si;
+si = 4;		//首先将4隐式地转换成SmallInt，然后调用SmallInt::operator=
+si += 3;	//首先将si隐式地转换成int，然后执行整数的加法
+SmallInt s = 3.14;	//double转换为int
+s += 3.14;		//SmallInt的类型转换符将s转换成int，内置类型转换将所得的int继续转换成double
+```
+
+#### 与转换构造函数区别
+
+只接受单独一个实参的 **非显式构造函数** 定义了从实参类型到类类型的类型转换；而 **非显式的类型转换运算符** 则定义了从类类型到其他类型的转换。
+
+#### 显式的类型转换运算符
+
+当类型转换运算符是显式（**explicit**）的时，也能执行类型转换，但是必须通过显式的强制类型转换。
+
+```c++
+class SmallInt {
+public:
+    //编译器不会自动执行这一类型转换
+    explicit operator int() const { return val; }
+};
+SmallInt si = 3;	//正确，SmallInt的转换构造函数（即只有一个形参的构造函数）不是显式的
+si + 3;				//错误，此处需要隐式的类型转换，但类的转换运算符是显式的
+static_cast<int>(si) + 3;	//正确，显式地请求类型转换
+```
+
+**例外** ：如果表达式被用作条件，编译器会将显式的类型转换自动应用于它。（向bool的类型转换通常用在条件部分，因此operator bool一般定义成explicit的）
+
+**注意** ：
+
+- 不要令两个类执行相同的类型转换：如果Foo类有一个接受Bar类对象的构造函数，则不要在Bar类中载定义转换目标是Foo类的类型转换运算符。
+- 避免转换目标是内置算术类型的类型转换。
+- 除了显式地向bool类型的转换之外，应尽量避免定义类型转换函数并尽可能限制那些”显然正确“的非显式构造函数。
+
+
+
+
+
+ 
+
 
 
 
