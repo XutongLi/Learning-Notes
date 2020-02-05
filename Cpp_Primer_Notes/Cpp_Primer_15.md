@@ -43,3 +43,58 @@ print_total(cout, basic, 20);	//调用Quote的net_price
 print_total(cout, bulk, 20);	//调用Bulk_quote的net_price
 ```
 
+### 4. 派生类
+
+派生类通过 **类派生列表** 指明它是从哪个类继承而来。派生类可有多于一个基类。
+
+一个派生类对象包含多个 **组成部分** ：一个含有派生类自己定义的（非静态）成员的子对象；以及一个与该派生类继承的基类对应的子对象，如果有多个基类，这样的子对象也有多个。
+
+可以把派生类的对象当成基类对象来使用，而且也可以将基类的指针或引用绑定到派生类对象的基类部分上。
+
+```c++
+Quote item;			//基类对象
+Bulk_quote bulk;	//派生类对象
+Quote *p = &item;	//p指向Quote对象
+p = &bulk;			//p指向bulk的quote部分
+Quote &r = bulk;	//r绑定到bulk的quote部分
+```
+
+#### 派生类构造函数
+
+派生类必须使用基类的构造函数来初始化基类部分（从基类中继承而来的成员）。
+
+```c++
+Bulk_quote(const string &book, double p, size_t qty, double disc) :
+	Quote(book, p), min_qty(qty), discount(disc) {}
+```
+
+#### 继承与静态成员
+
+若基类定义了静态成员，则在整个继承体系中只存在该成员的唯一定义。静态成员遵循通用的访问控制规则。
+
+```c++
+class Base {
+public:
+    static void statmem();
+};
+class Derived : public Base {
+    void f(const Derived&);
+};
+void Derived::f(const Derived &obj) {
+    //下列四种使用方法等价
+    Base::statmem();		//Base定义了statmem
+    Derived::statmem();		//Derived继承了statmem
+    obj.statmem();			//通过Derived对象访问
+    statmem();				//通过this对象访问
+}
+```
+
+#### 防止继承的发生
+
+要定义不能被继承的类，在其后加 `final` 关键字。
+
+```c++
+class A final {};	//A不能作为基类
+class B final : public c {};	//B不能作为基类
+```
+
