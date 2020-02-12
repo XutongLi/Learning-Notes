@@ -84,7 +84,99 @@ private:
 
 当编译器从Blob模板实例化出一个类时，会重写Blob模板，将模板参数T的每个实例替换为给定的模板实参。一个类模板的每个实例都形成一个独立的类。
 
+#### 类模板的成员函数
 
+与其他任何类相同，既可以在类模板内部，也可以在类模板外部为其定义成员函数。
+
+```c++
+//普通成员函数
+template <typename T>
+void Blob<T>::check(size_type i, const string &msg) const {
+    if (i >= data->size())
+        throw out_of_range(msg);
+}
+//构造函数
+tempalte <typename T>
+    Blob<T>::Blob() : data(make_shared<vector<T>>()) { }
+```
+
+成员函数只有在被用到时才进行实例化。
+
+**注意** ：类模板的作用域内，可以直接使用模板名而不必指定模板实参：
+
+```c++
+template <typename T> 
+class BlobPtr {
+private:
+    BlobPtr& operator++();	//前置运算符，等价于 BlobPtr<T>& operator++();
+};
+//后置运算符的类外定义
+template <typename T>
+BlobPtr<T> BlobPtr<T>::operator++(int) {
+    BlobPtr ret = *this;	//等价于 BlobPtr<T> ret = *this
+    ++ *this;
+    return ret;
+}
+```
+
+#### 类模板和友元
+
+如果一个类模板包含一个非模板友元，则友元被授权可以访问所有模板实例。
+
+如果友元自身是模板，类可以授权给所有友元模板实例，也可以只授权给特定实例。
+
+```c++
+template <typename T> class Pal;	//前置声明，将模板的一个特定实例声明为友元时用到
+class C {	//C是一个非模板类
+    friend class Pal<C>;	//用C实例化的Pal是C的一个友元
+    //Pal2的所有实例都是C的友元，这种情况无需前置声明
+    template <typename T> friend class Pal2;	
+};
+template <typename T> class C2 {	//C2是一个模板类
+    //C2的每个实例将相同实例化的Pal声明为友元
+    friend class Pal<T>;	
+    //Pal2的所有实例都是C2每个实例的友元，不需要前置声明
+    template <typename X> friend class Pal2;
+    //Pal3是一个非模板类，Pal3是C2所有实例的友元
+    friend class Pal3;
+};
+```
+
+为了让所有实例成为友元，友元声明中必须使用与类模板本身不同的模板参数。
+
+可令模板自己的类型参数成为友元：
+
+```c++
+template <typename T> 
+class Bar {
+friend T;
+};
+```
+
+#### 类模板的static成员
+
+```c++
+template <typename T>
+class Foo {
+public:
+    static size_t count() { return ctr; }
+private:
+    static size_t ctr;
+};
+Foo<string> fs;	//实例化static成员Foo<string>::ctr和Foo<string>::count
+Foo<int> a, b, c;	//三个对象共享Foo<int>::ctr和Foo<int>::count
+```
+
+每个类模板实例都有自己的static成员实例。
+
+static **数据成员** 也要定义为模板：
+
+```c++
+template <typename T>
+size_t Foo<T>::ctr = 0;
+```
+
+与其他成员函数相同，static **成员函数** 只有在使用时才会实例化。
 
 
 
