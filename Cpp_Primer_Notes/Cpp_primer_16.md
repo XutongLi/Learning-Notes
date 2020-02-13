@@ -178,7 +178,135 @@ size_t Foo<T>::ctr = 0;
 
 与其他成员函数相同，static **成员函数** 只有在使用时才会实例化。
 
+### 4. 模板参数
 
+#### 模板声明
+
+```c++
+template <typename T> class Blob;
+template <typename T> T calc(const &T, const &T);
+template <typename U> U calc(const &U, const &U);	//两个calc等价
+```
+
+一个特定文件所需要的所有模板的声明通常一起放置在文件开始位置，出现于任何使用这些模板的代码之前。
+
+#### 使用类的类型成员
+
+类的类型成员是定义在类中的类。
+
+默认情况下，C++通过作用域运算符访问的名字不是类型。因此，如果希望使用一个模板类型参数的类型成员，必须显式告诉编译器该名字是一个类型。通过使用关键字 `typename` 来实现这一点：
+
+```c++
+template <typename T>
+typename T::value_type top(const T &c) {
+    if (!c.empty())
+        return c.bacK();
+    else
+        return typename T::value_type();	//返回值初始化的元素
+}
+```
+
+#### 模板默认实参
+
+##### 函数模板的默认实参
+
+```c++
+//compare有一个默认模板实参less<T>和一个默认函数实参F()
+template <typename T, typename F = less<T>>
+int compare(const T &v1, const T &v2, F f = F()) {
+	if (f(v1, v2))	return -1;
+	if (f(v2, v1))	return 1;
+	return 0;
+}
+bool i = compare(1, 2);	//使用默认的less
+Sales_data item1("111"), item2("222");
+bool j = compare(item1, item2, compareIsbn);	
+//第三个实参是一个可调用对象，该可调用对象的返回类型必须能转换为bool值。
+```
+
+类型参数F表示可调用对象的类型，默认模板实参为less\<T>。f为函数形参，默认值为F()。
+
+##### 类模板的默认实参
+
+如果一个类模板为其所有模板参数都提供了默认实参，要是用这些默认实参，就必须在模板名之后跟一个空尖括号对：
+
+```c++
+template <class T = int> 
+class Numbers {
+public:
+	Numbers(T v = 0) :val(v) {}
+private:
+	T val;
+};
+Numbers<double> preci;
+Numbers<> preci2;	//空<>表示希望使用默认类型
+```
+
+### 5. 成员模板
+
+一个类（无论是普通类还是类模板）可以包含本身是模板的成员函数。这种成员称为 **成员模板** 。
+
+成员模板不能是虚函数。
+
+#### 普通类的成员模板
+
+```c++
+class DebugDelete {
+public:
+    DebugDelete(ostream &s = cerr) : os(s) {}
+    template <typename T> void operator() (T *p) const {
+        os << "deleting ptr" << endl;
+        delete p;
+    }
+private:
+    ostream &os;
+};
+
+double * p = new double;
+DebugDelete d;
+d(p);	//调用DebugDelete::operator()(double*)释放p
+int *a = new int;
+DebugDelete()(a);	//在一个临时DebugDelete对象上调用operator()(int*)
+```
+
+可将DebugDelete作为 `unique_ptr` 的删除器，在尖括号内给出删除器类型，并此类型对象给unique_ptr的构造函数：
+
+```c++
+unique_ptr<int, DebugDelete> p(new int, DebugDelete());
+//销毁p指向的对象
+//实例化DebugDelete::operator()<int>(int *)
+```
+
+#### 类模板的成员模板
+
+对与类模板定义成员模板，类和成员各自有自己的独立的模板参数。
+
+在类模板外定义成员模板时，必须同时为类模板和成员模板提供模板参数列表：
+
+```c++
+template <typename T> class Blob {
+public:
+	template <typename It> Blob(It b, Ib e);  
+};
+//定义：
+template <typename T>	//类的类型参数
+template <typename It>	//构造函数的类型参数
+Blob<T>::Blob(It b, It e) : data(make_shared<vector<T>>(b, e)) {}
+```
+
+为了实例化类模板的成员模板，必须同时提供类和函数模板的实参：
+
+```c++
+int ia[] = {0, 1, 2, 3};
+vector<long> vi = {0, 1, 2};
+list<const char*> w = {"now", "is"};
+//实例化Blob<int>类及其接受两个int*参数的构造函数，a1实例化为：Blob<int>(int*, int*)
+Blob<int> a1(begin(ia), end(ia));	
+//实例化Blob<int>类及其接受两个vector<long>::iterator参数的构造函数
+Blob<int> a2(vi.begin(), vi.end());
+//实例化Blob<string>类及其接受两个list<const char*>::iterator参数的构造函数
+Blob<string> a3(w.begin(), w.end());
+```
 
 
 
