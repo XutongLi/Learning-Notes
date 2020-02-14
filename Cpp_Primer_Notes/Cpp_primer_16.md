@@ -308,6 +308,101 @@ Blob<int> a2(vi.begin(), vi.end());
 Blob<string> a3(w.begin(), w.end());
 ```
 
+### 6. 控制实例化
+
+相同实例可能出现在多个对象文件中，在多个文件中实例化相同模板的额外开销可能非常严重。可以通过 **显式实例化** 来避免这种开销。
+
+```c++
+extern template declaration;	//实例化声明
+template declaration;			//实例化定义
+```
+
+将一个实例化声明为 `extern` 就表示承诺在程序其他位置有该实例化的一个非 extern 声明（定义）。对于一个给定的实例化版本，可能有多个extern声明，但只有一个定义。
+
+extern声明必须出现在任何使用此实例化版本的代码之前。
+
+```c++
+//Application.cpp
+//这些模板类型必须在程序其他位置进行实例化
+extern template class Blob<string>;
+extern template int compare(const int&, const int&);	//两个声明
+Blob<string> s1, s2;	//实例化会出现在别的位置
+Blob<int> a1 = {0, 1, 2};	//Blob<int>及其接受Initializer_list的构造函数在本文件中实现
+int i = compare(a1[0], a1[1]);	//实例化出现在其他位置
+```
+
+```c++
+//tempalteBuild.cpp
+//实例化文件必须为每个在其他文件中声明为extern的类型和函数提供一个定义
+template class Blob<string>;
+template int compare(const int &, const in&);
+```
+
+编译时，将Application.o和tempalteBuild.o链接在一起。
+
+在一个类模板的显式实例化定义中，所用类型必须能用于模板的所有成员函数。
+
+### 7. 模板实参推断
+
+对于 **函数模板** ，编译器利用调用中的函数实参来确定其模板参数。从函数实参来确定模板实参的过程为 **模板实参推断** 。
+
+#### 类型转换与模板类型实参
+
+将实参传递给 **模板类型** 的函数形参时，能够自动应用的类型转换只有：
+
+- const转换，可以将一个非const对象的引用（或指针）传递给一个const的应用（或指针）形参。
+- 数组或函数指针转换：如果函数形参 **不是引用类型** ，则可以对数组或函数类型的实参应用正常的指针转换。一个数组实参可以转换为一个指向其首元素的指针；一个函数实参可以转换为一个该函数类型的指针。
+
+其他的类型转换，如算术转换、派生类向基类的转换以及用户定义的转换都不能应用于函数模板。
+
+**注意** ：如果函数参数类型不是模板参数，则对实参进行正常的类型转换。
+
+```c++
+//ostream是非模板参数类型，可以正常类型转换；T是模板参数类型
+template <typename T> ostream &print(ostream &os, const T &obj) {
+    return os << obj;
+}
+```
+
+#### 函数模板显式实参
+
+某些情况下，编译器无法推断出模板实参的类型，如：
+
+```c++
+template <typename T1, typename T2, typename T3>
+T1 sum(T2, T3);
+```
+
+编译器无法推断T1，它未出现在函数参数列表中。因此每次调用sum都必须为T1提供一个 **显式模板实参** 。显式模板实参在尖括号中给出，位于函数名之后，实参列表之前。
+
+```c++
+//T1是显式指定的，T2和T3是从函数实参类型推断而来的
+auto val3 = sum<long long>(i, lng);	//long long sum(int, long)
+```
+
+显式模板实参按由左至右的顺序与模板参数匹配，尾部参数的现实模板实参可以忽略。
+
+##### 显式实参的正常类型转换
+
+```c++
+compare<long>(lng, 1024);	//实例化compare(long, long)
+compare<int>(lng, 1024);	//实例化compare(int, int)
+```
+
+#### 尾指返回类型与类型转换
+
+对于不知道返回结果类型的情况，也可以使用尾置返回类型：
+
+```c++
+template <typename It>
+auto fcn(It beg, It end) -> decltype(*beg) {
+	//...
+	return *beg;
+}
+```
+
+通知编译器fcn的返回类型与解引用beg参数的结果类型形同，返回值是一个左值。
+
 
 
 
