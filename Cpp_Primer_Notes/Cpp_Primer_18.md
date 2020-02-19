@@ -154,5 +154,63 @@ void f() {
 
 using 声明引入与已有函数形参列表完全相同的同名函数会引发错误，而 using 指示不会。
 
+### 2. 多重继承
+
+**多重继承** 是指从多个直接基类中产生派生类的能力。多重继承继承了所有父类的属性。
+
+```c++
+class Bear : public ZooAnimal {};
+class Panda : public Bear, public Endangered {};	//派生列表中包含多个基类
+```
+
+多重继承关系中，派生类的对象含有每个基类的子对象。
+
+派生类构造函数初始化所有基类：
+
+```c++
+//构造一个派生类的对象将同时构造并初始化它的所有基类子对象
+Panda::Panda(string name, bool onExhibit) : Bear(name, onExhibit, "Panda"),
+			Endangered(Endangered::critical) {}
+```
+
+### 3. 虚继承
+
+默认情况下，派生类中含有继承链上每个类对应的子部分。如果某个类在派生过程中出现了多次，则派生类中将包括该类的多个子对象。
+
+通过 **虚继承** 解决该问题。虚继承的目的是令某个类做出声明，承诺愿意共享它的基类。其中，共享的基类子对象称为 **虚基类** 。在这种机制下，不论虚基类在继承体系中出现了多少次，在派生类中都只包含一个共享的虚基类子对象。
+
+#### 使用虚基类
+
+指定虚基类的方式是在派生列表中添加关键字 `virtual` ：
+
+```c++
+//将ZooAnimal定义为Raccoon和Bear的虚基类
+class Raccoon : public virtual ZooAnimal {};
+class Bear : virtual public ZooAnimal {};	//virtual和public的顺序任意
+```
+
+在后续的派生类中共享虚基类的同一份实例：
+
+```c++
+class Panda : public Bear, public Raccoon, public Endangered {};
+//因为Raccoon和Bear继承ZooAnimal的方式都是虚继承，所以在Panda中只有一个ZooAnimal基类部分
+```
+
+#### 构造函数与虚继承
+
+虚派生中，虚基类由最低层的派生类初始化。
+
+```c++
+Panda::Panda(string name, bool, onExhibit):
+	ZooAnimal(name, onExhibit, "Panda"),	
+	Bear(name, onExhibit), Raccoon(name, onExhibit),
+	Endangered(Endangered::cirtical), sleeping_flag(false) {}
+//Panda位于派生的最低层并负责初始化共享的ZooAnimal基类部分
+```
+
+虚基类总是先于非虚基类构造，与它们在继承体系中的次序和位置无关。若有多个虚基类，虚基类的子对象按照它们在派生列表中出现的顺序从左到右依次构造。
+
+对象的销毁顺序与构造顺序相反。
+
 
 
