@@ -17,6 +17,8 @@
 
 #### dynamic_cast运算符
 
+执行从基类向派生类的带检查的强制类型转换。
+
 ```c++
 dynamic_cast<type*>(e);		//e必须是一个有效指针，转换失败返回0
 dynamic_cast<type&>(e);		//e必须是一个左值，转换失败抛出bad_cast异常
