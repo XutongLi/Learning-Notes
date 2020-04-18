@@ -20,9 +20,10 @@ int main(int argc, char *argv[])
 
     if ((dp = opendir(argv[1])) == nullptr)
         cout << "Can't open %s" << argv[1] << endl;
-    while ((dirp = readdir(dp)) != nullptr)
-        cout << dirp->d_name << endl;
-
+    else {
+        while ((dirp = readdir(dp)) != nullptr)
+            cout << dirp->d_name << endl;
+    }
     closedir(dp);
     exit(0);
 }
