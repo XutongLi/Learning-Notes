@@ -2,6 +2,7 @@
     > File Name: ls.cpp
     > Author: lixutong
     > Created Time: 2020-04-19 05:51:04
+    > Description: C++ implement of ls
  ************************************************************************/
 
 #include "../include/apue.h"
