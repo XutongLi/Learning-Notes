@@ -5,7 +5,7 @@
     > Description: print pid of this process
  ************************************************************************/
 
-#include "../include/apue.h"
+#include "apue.h"
 #include <iostream>
 using namespace std;
 

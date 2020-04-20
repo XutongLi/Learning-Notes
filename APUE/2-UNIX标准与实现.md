@@ -1,6 +1,6 @@
 ## 2 - UNIX标准及实现
 
-### 1. POSIX
+### 1. POSIX 标准
 
 **POSIX** 指的是可移植操作系统系统接口（Portable Operating System Interface），是一个最初由 **IEEE** 制定的标准族。
 

@@ -5,7 +5,7 @@
     > Description: errno示例
  ************************************************************************/
 
-#include "../include/apue.h"
+#include "apue.h"
 #include <iostream>
 #include <errno.h>
 using namespace std;

@@ -5,7 +5,7 @@
     > Description: 从标准输入进行读取，并写入标准输出
  ************************************************************************/
 
-#include "../include/apue.h"
+#include "apue.h"
 #include <iostream>
 #define BUFFSIZE 4096
 

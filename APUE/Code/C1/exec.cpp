@@ -5,7 +5,7 @@
     > Description: 从标准输入读取命令，并执行这些命令
  ************************************************************************/
 
-#include "../include/apue.h"
+#include "apue.h"
 #include <iostream>
 using namespace std;
 

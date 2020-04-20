@@ -5,7 +5,7 @@
     > Description: C++ implement of ls
  ************************************************************************/
 
-#include "../include/apue.h"
+#include "apue.h"
 #include <iostream>
 #include <dirent.h>
 using namespace std;
