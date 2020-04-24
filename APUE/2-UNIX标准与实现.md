@@ -2,7 +2,7 @@
 
 ### 1. POSIX 标准
 
-**POSIX** 指的是可移植操作系统系统接口（Portable Operating System Interface），是一个最初由 **IEEE** 制定的标准族。
+**POSIX** 指的是 **可移植操作系统系统接口 (Portable Operating System Interface)** ，是一个最初由 **IEEE** 制定的标准族。
 
 与本书相关的是 **1003.1** 操作系统接口标准，该标准的目的是提升应用程序在各种UNIX系统环境之间的可移植性。**1003.1** 以UNIX操作系统为基础，但它并不限于UNIX和UNIX类的系统。
 
