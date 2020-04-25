@@ -6,6 +6,8 @@
 - 以优化的块长度执行 **I/O** 等
 - 使用户不必担心如何选择使用正确的块长度
 
+**标准 I/O** 最终都要调用第三章中的 **I/O 例程** 。
+
 ### 2. 流和 FIFE 对象
 
 当用 **标准 I/O** 库打开或创建一个文件时，使一个 **流** 与一个文件相关联。（类比于文件 I/O 和文件描述符）
@@ -217,6 +219,62 @@ $size$ 为该结构的 `sizeof` ，$nobj$ 为对象或元素个数。
 对于 **二进制文件** ，文件指示器从文件起始位置开始度量，以字节为度量单位，$whence$ 包括：`SEEK_SET` （从文件起始位置开始）、`SEEK_CUR`（从文件当前位置开始） 和 `SEEK_END`（从文件尾端开始） 。
 
 对于 **文本文件** ，文件当前位置不能以简单的字节偏移量来度量。$whence$ 必须是 `SEEK_SET` ，$offset$ 只能有两种值：$0$ （后退到文件起始位置），或是对该文件的 **ftell** 所返回的值。使用 **rewind** 函数也可将一个流设置到文件的起始位置。
+
+### 10. 格式化 I/O
+
+#### 10.1 格式化输出
+
+```c++
+#include <stdio.h>
+int printf(const char *restrict format, ...);
+int fprintf(FILE *restrict fp, const char *restrict format, ...);
+int dprintf(int fd, const char *restrict format, ...);
+//以上三个函数返回值：若成功，返回输出字符数；若输出出错，则返回负值
+int sprintf(char *restrict buf, const char *restrict format, ...);
+//返回值：若成功，返回存入数组的字符数；若编码出错，返回负值
+int snprintf(char *restrict buf, size_t n, const char *restrict format, ...);
+//若缓冲区足够大，返回将要存入数组的字符数；若编码出错，返回负值
+```
+
+**printf** 将格式化数据写到标准输出，**fprintf** 写至指定的流，**dprintf** 写至指定的文件描述符。
+
+**sprintf** 将格式化的字符送入数组 $buf$ 中，**sprintf** 在该数组尾端自动加一个 **null** 字节，但该字符不包括在返回值中。使用 **sprintf** 必须保证缓冲区足够大，否则会造成缓冲区溢出问题。
+
+**snprintf** 中，缓冲区长度是一个显式参数，超过缓冲区尾端写的所有字符都被丢弃。
+
+**格式说明** 控制其余参数如何编写，以后又如何显示。每个参数按照转换说明编写，转换说明以百分号 **% **开始。
+
+#### 10.2 格式化输入
+
+```c++
+#include <stdio.h>
+int scanf(const char *restrict format, ...);
+int fscanf(FILE *restrict fp, const char *restrict format, ...);
+int sscanf(const char *restrict buf, const char *restrict format, ...);
+```
+
+**scanf** 族用于分析输入字符串，并将字符序列转换成指定类型的变量。在格式之后的各参数包含了变量的地址，用转换结果对这些变量赋值。
+
+### 11. 内存流
+
+**标准 I/O 流** 仍使用 **FILE** 指针进行访问，但并没有底层文件。所有的 I/O 都是通过 **缓冲区** 与 **主存** 之间来回传送字节来完成的。
+
+**fmemopen** 函数用于内存流创建：
+
+```c++
+#include <stdio.h>
+FILE *fmemopen(void *restrict buf, size_t size, const char *restrict type);
+```
+
+**返回值**：若成功，返回流指针；若错误，返回 **NULL** 。
+
+**fmemopen** 函数允许调用者提供缓冲区用于内存流；$buf$ 参数指向缓冲区的开始位置，$size$ 参数指定了缓冲区大小的字节数。如果 $buf$ 为空，**fmemopen** 函数分配 $size$ 字节数的缓冲区，在这种情况下，当流关闭时缓冲区会被释放。
+
+**过程** ：内存流创建 -> 字符写入流 -> 流冲洗（流冲洗后缓冲区才会发生变化）
+
+因为避免了缓冲区溢出，内存流非常适用于创建字符串。因为内存流只访问主存，不访问磁盘上的文件。所以对于把标准 I/O 流作为参数用于临时文件的函数来说，会有很大的性能提升。
+
+
 
 
 
