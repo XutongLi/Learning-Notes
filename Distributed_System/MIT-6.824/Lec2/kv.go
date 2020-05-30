@@ -19,20 +19,20 @@ const (
 
 type Err string
 
-type PutArgs struct {
+type PutArgs struct {		// put操作参数
 	Key   string
 	Value string
 }
 
-type PutReply struct {
+type PutReply struct {		// put操作返回值
 	Err Err
 }
 
-type GetArgs struct {
+type GetArgs struct {		// get操作参数
 	Key string
 }
 
-type GetReply struct {
+type GetReply struct {		// get操作返回值
 	Err   Err
 	Value string
 }
@@ -51,9 +51,9 @@ func connect() *rpc.Client {
 
 func get(key string) string {
 	client := connect()
-	args := GetArgs{"subject"}
+	args := GetArgs{key}
 	reply := GetReply{}
-	err := client.Call("KV.Get", &args, &reply)
+	err := client.Call("KV.Get", &args, &reply)		// 远程过程调用，参数为args，响应存于reply
 	if err != nil {
 		log.Fatal("error:", err)
 	}
@@ -63,7 +63,7 @@ func get(key string) string {
 
 func put(key string, val string) {
 	client := connect()
-	args := PutArgs{"subject", "6.824"}
+	args := PutArgs{key, val}
 	reply := PutReply{}
 	err := client.Call("KV.Put", &args, &reply)
 	if err != nil {
@@ -94,7 +94,7 @@ func server() {
 		for {
 			conn, err := l.Accept()
 			if err == nil {
-				go rpcs.ServeConn(conn)
+				go rpcs.ServeConn(conn)			//连接到一个客户端开启一个线程
 			} else {
 				break
 			}
@@ -103,7 +103,7 @@ func server() {
 	}()
 }
 
-func (kv *KV) Get(args *GetArgs, reply *GetReply) error {
+func (kv *KV) Get(args *GetArgs, reply *GetReply) error {	// rpc接口，参数为req和reply
 	kv.mu.Lock()
 	defer kv.mu.Unlock()
 
@@ -135,6 +135,8 @@ func main() {
 	server()
 
 	put("subject", "6.824")
-	fmt.Printf("Put(subject, 6.824) done\n")
-	fmt.Printf("get(subject) -> %s\n", get("subject"))
+	put("testkey", "001")
+	fmt.Printf("Put(testkey, 001) done\n")
+	fmt.Printf("get(testkey) -> %s\n", get("testkey"))
+	fmt.Printf("get(sybject) -> %s\n", get("subject"))
 }
