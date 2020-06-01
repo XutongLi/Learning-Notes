@@ -1,6 +1,6 @@
 # MapReduce 论文解读
 
-**说明**：本文为论文**《MapReduce: Simplified Data Processing on Large Clusters》**的个人理解，难免有理解不到位之处，欢迎交流与指正 。
+**说明**：本文为论文 **《MapReduce: Simplified Data Processing on Large Clusters》** 的个人理解，难免有理解不到位之处，欢迎交流与指正 。
 
 **论文地址**：[MapReduce Paper](https://github.com/XutongLi/Learning-Notes/blob/master/Distributed_System/Paper_Reading/MapReduce/mapreduce.pdf)
 
