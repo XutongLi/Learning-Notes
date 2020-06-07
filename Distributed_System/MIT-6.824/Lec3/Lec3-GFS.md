@@ -46,13 +46,13 @@ master 时不时需要通过checkpoint将其完整状态写到磁盘 。master�
 
 client 包含一个文件名和一串字节，即想要写的数据包含在一个buffer中 。
 
-mastre 会周期性地和chunkserver通信，询问这些服务器上持有哪些chunk以及它们的版本是是什么，若master记录的某chunk版本号为17，而它没找到含有此版本号的chunksvr，master不会响应，并告诉client端，”目前无法回答，请重试“ 。
+master 会周期性地和chunkserver通信，询问这些服务器上持有哪些chunk以及它们的版本是是什么，若master记录的某chunk版本号为17，而它没找到含有此版本号的chunksvr，master不会响应，并告诉client端，”目前无法回答，请重试“ 。
 
 使用 **版本号** 的理由是：master能根据它整理出哪些chunk服务器包含最新的chunk，master能授予这些chunk服务器称为primary的能力。
 
 lease时间一般为60s，这其实是一种机制，它能确保我们最终不会有两个primary，防止一个primary挂掉，没有过期机制，在另一个上位primary之后，挂掉的那只重启后起冲突
 
-只有当maser指定了一个新的primary（即master不知道谁是primary时）时，版本号才会改变 。
+只有当master指定了一个新的primary（即master不知道谁是primary时）时，版本号才会改变 。
 
 防止 **split brain** （两个primary问题）：master提供了lease，即在特定时间里给chunk primary的权利，master知道该lease会持续多长时间 ，primary也直到lease会持续多长时间 。如果lease到期，则此chunk会直接拒绝Client请求，Client问master primary是谁，就会分配一个新的primary 。所以对于split brain问题，若master无法和primary通信，就会等到期时间过后，分配新的primary 。
 
