@@ -2,7 +2,7 @@
 
 **说明**：本文为论文 **《The Google File System》** 的个人总结，难免有理解不到位之处，欢迎交流与指正 。
 
-**论文地址**：[GFS Paper](https://github.com/XutongLi/Learning-Notes/blob/master/Distributed_System/Paper_Reading/GFS/The Google File System.pdf)
+**论文地址**：[GFS Paper](https://github.com/XutongLi/Learning-Notes/blob/master/Distributed_System/Paper_Reading/GFS/The%20Google%20File%20System.pdf)
 
 > 阅读此论文的过程中，感觉内容繁多且分散，一个概念的相关内容在不同部分相交地出现 。所以本文尽量将同一概念的相关内容串联并总结在一起 。
 >
@@ -118,7 +118,7 @@
 元数据细节：
 
 ```
-namespace								(nv)
+namespace (a lookup table mapping full pathnames to metadata)	(nv)
 filename -> array of chunk handles		(nv)
 chunk handle -> version num				(nv)
 				list of chunkservers	(v)
