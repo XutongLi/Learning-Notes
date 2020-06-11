@@ -56,7 +56,7 @@ paper中将我们所谈论的这种输入事件和其他事件流称为 **Loggin
 
 事实上，backup（备机）期望能每秒得到许多log entry，因为在primary（主）中，会通过周期性的时钟中断（ Periodic timer interrupt）来生成log entry。事实证明，每次中断会生成一个log entry放到backup（备机）中
 
-在primary 崩溃时，fault tolerance（容错）机制就要起作用了，作为backup（备机），它会看到它无法从logging channel中接收到任何log entry 。这就需要让backup上线（Go live），这就意味着，backup（备机）就会停止等待这些来自primary（主）发送到logging Channel上的输入事件；相反，虚拟机监视器（VMM）就会允许这个backup（备机）自由执行而无需等待来自primary（主）的输入事件 。虚拟机监视器（VMM）会让网络中接下来来自Client端的请求都发送给backup（备机）而不是primary（主），此处的虚拟机监视器（VMM）就不再会去丢弃backup（备机）中虚拟机所生成的输出数据包，原来primary（主）的工作就被backup（备机）所接管了 。
+在primary 崩溃时，fault tolerance（容错）机制就要起作用了，作为backup（备机），它会看到它无法从logging channel中接收到任何log entry 。这就需要让backup上线（Goweird live），这就意味着，backup（备机）就会停止等待这些来自primary（主）发送到logging Channel上的输入事件；相反，虚拟机监视器（VMM）就会允许这个backup（备机）自由执行而无需等待来自primary（主）的输入事件 。虚拟机监视器（VMM）会让网络中接下来来自Client端的请求都发送给backup（备机）而不是primary（主），此处的虚拟机监视器（VMM）就不再会去丢弃backup（备机）中虚拟机所生成的输出数据包，原来primary（主）的工作就被backup（备机）所接管了 。
 
 如果backup（备机）发生了故障，primary（主）就必须使用类似的处理方式来放弃这个backup（备机），停止向backup（备机）发送事件 。
 
@@ -91,44 +91,5 @@ primary 通过log将output记录 。
 **split-brain** 问题：主备同时上线（网络故障，主备之间不能通信）
 
 **test-and-set server**（会放在存储服务器上） ，当一个VM想要上线时需要进行发送 **test-and-set** 请求，一个TAS sever中会存有 flag用于确立是否已有primary vm，第二个请求TAS server的vm不会上线成为primary 。 （类似于互斥锁）
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
