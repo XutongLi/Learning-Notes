@@ -155,6 +155,14 @@
 
 另外，为了防止 **backup** 的重放落后太多，在发送和确认 **log entry** 的协议中，会发送附加信息来确定 **primary** 和 **backup** 之间的 `实时执行延迟` ，通常小于 *100ms* 。若 **backup** 出现明显的延迟，**VM-FT** 会通知调度器给它分配更少的 *CPU* 资源，从而降低 **primary** 的速度；若 **backup** 追起来了，逐渐增加 **primary** 的速度 。
 
+### 4.7 磁盘的内存访问竞争
+
+磁盘操作可能和 **VM** 中的应用程序或 *OS* 存在内存访问竞争 。
+
+这种竞争在网络数据包或磁盘块到达 **primary** 时产生 。在没有 **VM-FT** 的情况下，相关硬件会通过 **DMA** 将该数据复制到内存中 。若 *APP/OS* 也在同时读取这块内存。那么对于 **primary** 和 **backup** ，由于时间上的微小差异，可能一个在 **DMA** 之前读取，一个在 **DMA** 之后读取，就导致了不一致 。
+
+解决方法是使用 `bounce buffer` ，它的大小与磁盘操作访问的内存大小相同 。**primary** 的 **Hypervisor** 首先复制网络数据或磁盘块到 **bounce buffer** ，此时 **primary** 无法访问它 ，**Hyperbisor** 中断 **primary** 使其暂停执行，并记录中断的指令 。然后 **Hypervisor** 将 **bounce buffer** 中的内容复制到 **primary** 的内存 ，并让其继续执行 。通过 **logging channel** 将数据送到 **backup** 之后，**backup** 的 **Hypervisor** 在相同指令处中断 **backup** ，将数据复制到 **backup** 的内存后，最后恢复 **backup** 的执行 。
+
 ***
 
 ## 5. 机器级复制和应用级复制
