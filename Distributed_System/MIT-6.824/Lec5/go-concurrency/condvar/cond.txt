@@ -1,7 +1,10 @@
 mu.Lock()
 // do something that might affect the condition
-cond.Broadcast()
+cond.Broadcast()	
 mu.Unlock()
+
+// 调用broadcast会唤醒所有处于等待的线程
+// 可以将signal当做是为提升效率而使用的东西
 
 ----
 

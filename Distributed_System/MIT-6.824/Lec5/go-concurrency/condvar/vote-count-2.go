@@ -26,8 +26,8 @@ func main() {
 	for {
 		mu.Lock()
 
-		if count >= 5 || finished == 10 {
-			break
+		if count >= 5 || finished == 10 {	// busy waiting（即反复检查一个条件是否为真）
+			break	// 当它在做这件事的时候，它会去榨干CPU其中一个Core的100%的资源
 		}
 		mu.Unlock()
 	}

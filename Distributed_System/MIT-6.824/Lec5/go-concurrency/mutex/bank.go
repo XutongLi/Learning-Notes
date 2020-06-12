@@ -1,3 +1,4 @@
+// 锁的另一种用途就是可以保证某段区域代码的原子性
 package main
 
 import "sync"
