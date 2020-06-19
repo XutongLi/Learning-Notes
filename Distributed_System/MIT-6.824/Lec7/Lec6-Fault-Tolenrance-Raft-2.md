@@ -11,3 +11,8 @@
 **snapshot**：state machine 状态要比对应的 log 小，所以当log大小超过某个阈值后，将一个log point对应的执行状态进行备份。
 
 解决建立快照时，follower无法赶上leader的问题：install snapshot RPC
+
+
+
+***
+
