@@ -2,6 +2,6 @@
 
 [APUE](https://github.com/XutongLi/Learning-Notes/tree/master/APUE)
 
-[C++ Primer]()
+[C++ Primer](https://github.com/XutongLi/Learning-Notes/tree/master/Cpp_Primer_Notes)
 
-[Distributed System]()
+[Distributed System](https://github.com/XutongLi/Learning-Notes/tree/master/Distributed_System)
