@@ -1,3 +1,5 @@
+
+
 # Tree Indexes
 
 ## 1. Table Indexes
@@ -7,6 +9,10 @@
 由于index是副本，所以DBMS会确保表内容和index是同步的。如果改变了表中一个tuple，也会将这个修改反应在index上。
 
 对于DB的index数量的选择存在trade-off，需考虑存储成本（buffer pool中和磁盘中）和维护成本（每次插入和更新都要修改index）。
+
+> 若使用Hash Index，则必须使用完整的key，无法进行部分查找或范围查找，如>、like。
+>
+> 在表的一个属性上可以建立多种类型的Index，query plan会按照查询的具体类型来确定使用的Index。
 
 ## 2. B+Tree Basic
 
@@ -113,7 +119,7 @@
 
 ### 4.4. Non-Unique Indexes
 
-对于非唯一索引的处理：
+**对于一个节点中key重复的处理**：
 
 - 在节点中存储重复的key
 
@@ -122,6 +128,17 @@
 - 只存储key一次，但是将value存储在一个list中
 
   ![image](https://user-images.githubusercontent.com/29897667/109540947-22db2080-7afe-11eb-8a9d-8d8e7e48b2f9.png)
+
+**对于整个B+Tree中重复key的处理**：
+
+- **Append Record Id**：将key与tuple的record id (page_id + offset) 组合成为新的唯一的key。查找时，相当于使用新key的前缀来查找。实际中主要使用这种方法。
+
+  ![image](https://user-images.githubusercontent.com/29897667/109553472-0b0b9880-7b0e-11eb-8dd0-cede7771f140.png)
+  ![image](https://user-images.githubusercontent.com/29897667/109553525-18c11e00-7b0e-11eb-8775-fe2e5d798d43.png)
+
+- **Overflow Lead Nodes**：允许为叶节点扩展溢出节点。这种方法实现复杂。
+
+  ![image](https://user-images.githubusercontent.com/29897667/109553592-2d9db180-7b0e-11eb-93f7-a42ee9c9280c.png)
 
 ### 4.5. Intra-Node Search
 
@@ -156,4 +173,100 @@
 一个节点中保存的是其子节点或兄弟节点的page id而非指针，所以需要先通过buffer pool来获取page在内存中的地址（指针）。
 
 如果page被pin在buffer pool中，那么可以在节点中保存指针，这样避免了page table的查找（page table查找需要加锁）。
+
+## 6. 其他索引使用
+
+### 6.1. 隐式索引 (Implicit Indexes)
+
+在创建主键或生命唯一性约束时，DBMS会隐式创建Index去实现完整性约束。但是创建外键（外键是另一张表的唯一性索引）时不会隐式创建Index。
+
+![image](https://user-images.githubusercontent.com/29897667/109603917-9a8c6800-7b5d-11eb-896d-a2a4a6e9b19e.png)
+
+### 6.2. 部分索引 (Partial Indexes)
+
+可以在表的部分tuple上构建索引，这么做可以减少索引大小，且可以减少维护索引的开销。
+
+部分索引最常用的场景是对于日期范围划分索引，如对每个月建立一个索引。
+
+使用部分索引可以避免一堆不需要的数据取污染buffer pool。
+
+![image](https://user-images.githubusercontent.com/29897667/109639973-d5f15b80-7b8a-11eb-958e-a009f31bcdb3.png)
+
+多数数据库支持。
+
+### 6.3 覆盖索引 (Covering Indexes)
+
+处理查询所需的所有字段都能在索引本身中找到，这样的索引称为覆盖索引。DBMS不需要去查询tuple。
+
+此举减少了buffer pool中的锁争用。
+
+![image](https://user-images.githubusercontent.com/29897667/109644651-b52c0480-7b90-11eb-8493-2cf48b374fda.png)
+
+少数数据库支持。
+
+### 6.4 Index Include Columns
+
+在索引中嵌入额外的属性，以支持仅访问索引的查询。
+
+这些额外属性仅存储在B+Tree叶节点中，且不作为key的一部分。
+
+![image](https://user-images.githubusercontent.com/29897667/109653110-92ebb400-7b9b-11eb-8f89-336f7112626b.png)
+
+### 6.5 函数式/表达式索引 (Functional/Expression Indexes)
+
+索引不一定需要以key在表中的方式来存储key。
+
+可以使用表达式来建立索引。
+
+![image](https://user-images.githubusercontent.com/29897667/109654869-adbf2800-7b9d-11eb-9efc-e86900c12b72.png)
+
+## 7. Trie
+
+### 7.1 简介
+
+使用key的 **digit**（bit、byte或其他）表示来逐个检查前缀，而不是比较整个键。又称为 **Digital Search Tree**、**Prefix Tree**。
+
+从根节点到某个节点，其路径上digit组成的key，即为该节点对应的key。
+
+两个具有相同前缀的key，它们在Trie上游相同的起始路径。
+
+![image](https://user-images.githubusercontent.com/29897667/109666527-3a6fe300-7baa-11eb-8c42-a3a07ee8f049.png)
+
+### 7.2 特征
+
+- 形状取决于key的组成和长度，与key的插入顺序无关，不要求进行重新平衡的操作
+- 所有操作复杂度为 `O(k)` ，`k` 为key的长度
+- 不存储完整key，由从根节点到叶节点的路径来表示key
+
+- 点查询Trie更快，但对于扫描来说，Trie比B+Tree慢很多，因为要进行很多回溯操作
+
+## 8. Radix Tree
+
+也叫作 **Patrucia Tree**。对Trie做垂直压缩，忽略所有仅有一个child相传的路径。
+
+有可能出现false positive（如对于前缀ha，hat和hair都匹配），所以tree搜索出Record_id后需要通过该id找到tuple，与key作对比以验证key是否真匹配。
+
+下图一为Trie，图二为对齐垂直压缩后的Radix Tree：
+
+![image](https://user-images.githubusercontent.com/29897667/109700078-4f5d6e00-7bcc-11eb-98ee-078156316c25.png)
+
+![image](https://user-images.githubusercontent.com/29897667/109700139-600de400-7bcc-11eb-87fc-d6c1ea7de29f.png)
+
+## 9. Inverted Index
+
+**倒排索引** 被用来映射一个word和目标属性中含有该word的record（即试图找的是某个属性中的一个子元素）。
+
+一般用于keyword search。（Hash Table适用于point search，B+Tree适用于range search）
+
+**支持的查询类型**：
+
+- 词组查询：查找含有一组给定顺序的words的records
+- 近似查询：查找两个words在对方n个words内的records
+- 通配符查询：寻找符合某种pattern的words所在的records
+
+**存储什么**：Inverted Index至少需要存储每条记录中包含的words（用标点符号分隔）。它还可以包括额外的信息，如词频、位置和其他元数据。
+
+**何时更新**：更新Inverted Index是开销非常大的，所以大多数DBMS都会维护辅助数据结构来分段更新，然后批量更新索引。
+
+
 
