@@ -20,7 +20,7 @@
 
 [二叉搜索树、平衡二叉树、B-Tree、B+Tree 区别](<http://www.liuzk.com/410.html>)
 
-**B+Tree** 是 self-balancing的树形结构，它会保证数据的有序性，支持 **O(logn)** 复杂度的查找、顺序访问、插入和删除。
+**B+Tree** 是 self-balancing的树形结构，它会保证数据的有序性，支持 **O(logn)** ($log_{\lceil n/2 \rceil}n$) 复杂度的查找、顺序访问、插入和删除。
 
 相比B-Tree，B+Tree有一个优势是：当遍历到B+Tree底部时，可以沿着叶子节点进行循序扫描。
 
@@ -28,14 +28,15 @@
 
 - B+Tree是一种多路查找树（M-way search tree），这意味着在树中的每个节点处，它可以通过M条不同的路线到达其他节点。
 - 它是 **perfect balanced** 的，每个叶节点都在相同的高度；对树进行修改时，该数据结构会始终保持平衡性
-- 每个节点都至少是半满的情况：`ceil(M/2)-1 <= #keys in one node <= M-1` （M为节点的度）
+- 每个中间节点有 `ceil(M/2) - M` 个子女
+- 每个节点都至少是半满的情况：`ceil((M-1)/2) <= #keys in one node <= M-1` （M为节点的度）
 - 每个有 `k` 个key的中间节点都有 `k+1` 个非空子节点
 
 ### 2.3. B+Tree Node
 
 #### 2.3.1. Overview
 
-![1614455576737](C:\Users\XutongLi\AppData\Roaming\Typora\typora-user-images\1614455576737.png)
+![1614455576737](https://user-images.githubusercontent.com/29897667/113731912-bb7f4480-972b-11eb-8c8a-c3f20faf8abe.png)
 
 - B+Tree每个节点都是由key-value对构成的数组，node中的key以某种规则排序
 - B+Tree 叶节点含有Sibling Pointers（兄弟指针）用于循序遍历，中间节点没有
@@ -78,6 +79,7 @@
 - 否则：
   - 尝试重新分布，从有相同父节点的兄弟节点借一个key给 `L` 
   - 若重新分布失败，合并 `L` 和有相同父节点的兄弟节点
+- 对于中间节点，至少要有 $\lceil n/2 \rceil$ 个指针；对于叶节点，至少要有 $\lceil (n-1)/2 \rceil$ 个key。
 
 ## 3. 聚簇索引
 
@@ -127,6 +129,8 @@
 
   ![image](https://user-images.githubusercontent.com/29897667/109540881-0ccd6000-7afe-11eb-827e-e3671596ce30.png)
 
+  查询时找到最左的key，在向右遍历，直到找到所有包含该key的records。
+
 - 只存储key一次，但是将value存储在一个list中
 
   ![image](https://user-images.githubusercontent.com/29897667/109540947-22db2080-7afe-11eb-8a9d-8d8e7e48b2f9.png)
@@ -150,11 +154,19 @@
 - 二分查找，需要key在node中是有序的
 - 差值法：根据已知的key的分布规律估计key的大约位置，以此位置作为扫描的起始位置
 
+### 4.6. 辅助索引和记录重定位
+
+一些文件组织（如B+Tree文件组织）可能会改变记录的位置，即使该记录并未被更新（如B+Tree节点的分裂和合并）。若非聚集索引叶节点中存储了指向记录的指针（记录的位置），则记录位置改变时，会引发非聚集索引更新而导致的disk IO。
+
+解决这一问题的方法是：在非聚集索引的叶节点中，存储聚集索引的key。避免了record位置更新带来的非聚集索引节点的IO操作。但是查找非聚集索引后还需要查找一次聚集索引。
+
 ## 5. B+Tree Optimazations
 
 ### 5.1. Prefix Compression
 
 **前缀压缩**：在一个叶节点当中，若key是有序的，则它们很有可能有相同前缀。所以可以将该前缀提取出来，只存储这些key在该前缀后的部分。可以节省大量空间。
+
+（在字符串属性上建索引可以使用该优化，因为字符串不定长，且字符串比较大的话会减少节点的出度）
 
 ![image](https://user-images.githubusercontent.com/29897667/109545778-3be6d000-7b04-11eb-93ba-41f3fd501e67.png)
 
@@ -168,7 +180,7 @@
 
 ### 5.3. Bulk Insert
 
-**大量插入**：有时需要将大量数据导入数据库，逐个插入key同时构建index效率很低下，因为要进行大量的合并。可以将所有数据插入后，再讲key排序，自底向上地构建索引。
+**大量插入**：有时需要将大量数据导入数据库，逐个插入key同时构建index效率很低下，因为要进行大量的合并。可以将所有数据插入后，再将key排序，自底向上地构建索引。
 
 ### 5.4. Pointer Swizzling
 
