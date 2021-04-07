@@ -61,9 +61,49 @@
 
 key不是单个属性，而是一个属性列表。key值按照字典序排序。
 
-如一个key (course_id, semester, year)，这样的索引在查找特定学期/年注册了特定课程的学生是很有用的。
+如 `(dep_name, salary)` ，这一key是由系名和教师工资连接而成。
 
+该复合key可用来进行的高效查询：
 
+```sql
+// 可高效查询，在两个属性上进行点查询
+select ID	from instructor
+where dept_name = "Finance" and salary = 8000
+// 可高效查询，在第一个属性上指定等值条件，在第二个属性上指定范围查询（对应于搜索属性上的一个范围查询）
+select ID	from instructor
+where dept_name = "Finance" and salary < 8000
+// 可高效查询，等价于(Finance, -∞)到(Finance, +∞)的范围查询
+select ID	from instructor
+where dept_name = "Finance"
+// 不可高效查询，因记录存在于不同磁盘块，会导致大量IO（不对应于搜索属性上的一个范围查询）
+select ID	from instructor
+where dept_name < "Finance" and salary < 8000
+```
+
+[多级索引（复合索引）](<https://www.pianshen.com/article/9523749466/>)
+
+[最左匹配原则](<https://www.cnblogs.com/lanqi/p/10282279.html>)
+
+## 4. 位图索引
+
+**位图 (bitmap)** 就是位的一个简单数组。
+
+对于一个关系r，它的一个属性A只能取很少的一些值，则可在此属性上建立 **位图索引**。为该属性的每个取值建立一个位图，位图大小为记录数N。对每个记录编号，若记录i取值v，则将v值对应的位图上的第i位置1。该属性所有取值的位图共同构成位图索引。
+
+**作用**：
+
+- 优化在多个码上的选择操作：如 `select * from r where gender='f' and level='L2'` ，将gender属性和level属性的指定值上位图进行交运算，结果中值为1的位即为所要查询到的记录。
+- 统计满足所给定条件的记录数：统计交操作后值为1的位数，可以在不访问表的情况下得到满足条件的记录数
+- 存在位图：删除记录会造成存储空隙，移动记录来填充间隙代价又大。所以可以建立存在位图。该位图中如果第i位的值为0，表示记录i不存在，否则为1。
+- 压缩B+Tree叶节点：B+Tree叶节点可能存储拥有某key的记录列表。记录以记录号 (page_id+offset) 的形式存储。此时可以用位图来标识记录，占用空间更小。
+
+## 5. SQL中的索引操作
+
+```sql
+create index dept_index on instructor(dept_name)	// 定义索引
+create unique index dept_idx on instructor(dept_name)	//在候选码上定义索引
+drop index dept_idx 	// 删除索引
+```
 
 
 
