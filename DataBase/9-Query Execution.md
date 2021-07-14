@@ -144,3 +144,156 @@ DBMS将 **WHERE Clause** 表示为 **expression tree**。（在一个operator中
 
 为了在运行时评测expression tree（的条件判断的正确性），DBMS会维护一个context handler去包含执行的一些元数据（current tuple、table schema、parameter）。这些DBMS会便利tree去评测操作并产生结果。
 
+## 5. Parallel Execution 的好处
+
+- 想在数据库中利用CPU或GPU的多核
+- 更高的吞吐量：每秒执行更多的查询、每秒处理更多的数据
+- 更小的延迟：单个查询要花的执行时间变小
+- 更好的系统响应能力和可用性：系统对请求更快地响应
+
+## 6. 并行(parallel)和分布式(distributed)
+
+### 6.1. 相同点
+
+将一个数据库分散到多个资源（多台机器、多个CPU、多个磁盘等）上，以改善性能、成本、延迟等。对外表现为单个DB实例。
+
+### 6.2. 不同点
+
+**Parallel DBMS**
+
+- 资源在物理上相邻
+- 资源之间的通信方式高速、便宜、可靠
+
+**Distributed DBMS**
+
+- 资源在物理上距离比较远 
+- 资源之间的通信方式慢、且成本和可靠性不可忽视
+
+## 7. Parallel Process Model
+
+如何组织系统来通过多个worker处理并发请求。情况包括一个请求分散给多个worker、多个请求给多个worker。
+
+### 7.1. Process per Worker
+
+- 每个worker是一个独立的OS进程，它依赖于OS sheduler
+- 使用shared memory来存储全局数据结构
+- 一个进程crash不会影响到整个系统
+
+### 7.2. Process Pool
+
+- 一个worker使用pool中空闲的worker，不会为进来的每个连接去创建一个进程
+- 仍然依赖于OS scheduler和shared memory
+- 这种方法对CPU缓存一致性不好，因为不能保证在查询间使用一个进程
+
+### 7.3. Thread per Worker
+
+- 单个进程中有多个worker threads
+- DBMS使用一个dispatcher thread进行调度
+- 一个thread crash会导致系统crash
+- 优点：上下文切换开销更小，且不需要管理shared memory
+
+## 8. Parallel类型
+
+### 8.1. Inter-Query
+
+- 同时执行不同的queries
+- 可以提升吞吐率并减少延迟
+- 如果queries是只读的，则容易做到；如果queries会同时更新DB，则很难正确做到（并发控制）
+
+### 8.2. Intra-Query
+
+- 将一个查询拆分为多个子任务或片段，然后在不同的worker上同时并行执行这些任务
+- 可以减少长时间运行的query的延迟，对于分析性查询优化效果明显
+- 每个operator既接受数据也生产数据，可以将其看作“生产者-消费者模型”
+- 对于每个relational operator都有并行算法：
+  - 可以使用多个thread访问中心数据结
+  - 或者将收到的数据进行划分，然后使用多线程分别处理这些数据分区（这样就不需要对worker进行协调了）
+- 如 **Parallel Grace Hash Join**，可以让每个worker负责一个bucket中的match
+
+![image](https://user-images.githubusercontent.com/29897667/125506043-dc7562ac-7cda-462d-bbee-1c3393a19a44.png)
+
+#### 8.2.1. Intra-Operator Parallelism (Horizontal)
+
+- 将一个完整的操作拆分成多个并行的操作，即将操作的数据分为多段，每一段的执行函数都是一样的，每段中的数据为输入数据中的一部分
+- 如对B+Tree的parallel scan
+- 使用叫**exchange**的operator将这些结果组合在一起，它们放在query plan中可以并行执行的位置
+- **exchange**阻止DBMS在plan中执行它上面的操作符，直到它从子级接收到所有的数据
+
+**exchange operators**：
+
+- **Gather**：将多个workers的结果组合成一个输出流（多对一）
+- **Repartition**：将多个输入流重新组织成多个输出流，即以一种方式partition，再以另一种方式redistribute（多对多）
+- **Distribute**：把一个单一输入流分成多个输出流
+
+**示例**（图中维护的为一个hash table）：
+
+![image](https://user-images.githubusercontent.com/29897667/125512826-d418c1e0-c89b-4adb-b1fa-0744a2aef2ec.png)
+
+#### 8.2.2. Inter-Operator Parallelism (Vertical)
+
+- 不同的线程在同一时间执行不同的operator
+- 将数据从一个阶段传输到下一个阶段而不进行物化（生成临时表），又称为**pipelined parallelism**
+
+**示例**：
+
+![image](https://user-images.githubusercontent.com/29897667/125514710-786d11d8-8a1a-49d9-b0ab-256b7a00b06f.png)
+
+#### 8.2.3. Bushy Parallelism
+
+- inter-operator parallelism的扩展，workers同时执行query plan的不同分段的多个operators
+- 依然使用exchange operator从各段组合中间结果
+- 每个operator就是它自己的worker
+
+**示例**：
+
+![image](https://user-images.githubusercontent.com/29897667/125516220-c2ae9aff-c25e-46eb-ac83-7c928258128d.png)
+
+![image](https://user-images.githubusercontent.com/29897667/125516179-eadaf2fc-dc41-4f34-9e74-0bb03d9d7acd.png)
+
+## 9. IO Parallelism
+
+如果disk IO是瓶颈的话，那么并行执行查询也不会带来太大性能提升。
+
+对数据库文件和数据进行拆分，分散到存储设备的不同位置处（让多个存储设备以单个逻辑设备的形式来供数据库系统使用）
+
+**划分粒度**：
+
+- 每个DB多个disk
+- 一个disk上一个DB
+- 一个disk上一个relation（table）
+- 划分relation到多个disk上
+
+### 9.1. Multi-Disk Parallelism
+
+- 使用多块存储介质来存数据库文件
+- 可通过RAID配置实现，对于DBMS是透明的
+- 不可以使用多worker并行访问，因为DBMS不知道底层存储布局
+
+### 9.2. File-based Parallelism
+
+- 可对每个database指定disk上的位置
+- buffer pool manager将page映射到disk位置上
+
+### 9.3. Logical Partitioning
+
+- 将单个logical table划分为不相交的physical partition，这些Partition都被单独管理。
+- 这些Partitioning对于应用是透明的，即应用访问这个logical table无需关注它的具体存储方式
+
+#### 9.3.1. Vertical Partitioning
+
+- 分开存储一张表上的属性（类似于列存）
+- 需要取存储tuple信息以重建原始record
+
+![image](https://user-images.githubusercontent.com/29897667/125622283-f84d9c22-6f54-4d76-a134-2bf396bc5d10.png)
+
+#### 9.3.2. Horizontal Partitioning
+
+- 基于一些Partitioning keys，将一个table的tuples划分为不相交的分段
+- 有不同的方法来决定如何做Partition
+  - Hash Partitioning
+  - Range Partitioning
+  - Predicate Partitioning
+- 划分方式的有效性取决于query
+
+![image](https://user-images.githubusercontent.com/29897667/125622315-463dec54-1113-488a-90fc-c0b63a77954a.png)
+
