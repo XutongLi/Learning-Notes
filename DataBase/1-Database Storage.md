@@ -117,6 +117,7 @@
 ### 6.2 Log-structured
 ![image](https://user-images.githubusercontent.com/29897667/108604954-e7e53880-73eb-11eb-9878-181101d956cc.png)
 ![image](https://user-images.githubusercontent.com/29897667/108604957-eddb1980-73eb-11eb-8295-fb5c30eccb76.png)
+
 - DBMS只存储log record（db如何被修改，insert、update、delete）而非tuple
 - 读取一个记录时，从后往前读log，并重建tuple
 - 支持快速写，暂时慢速的读，适用于append-only的storage
@@ -128,7 +129,7 @@
 一个tuple即一串字节，DBMS负责将这这个字节串解释为属性类型和值。
 ### 7.1 定长记录
 ![image](https://user-images.githubusercontent.com/29897667/108605400-d7828d00-73ee-11eb-81c4-d83d2081a68e.png)
-- 每个tuple都有一个header，记录visibility info（concurrency control）和对于Null Valuede Bit Map
+- 每个tuple都有一个header，记录visibility info（concurrency control）和对于Null Value 的 Bit Map
 - 属性以定义它们时的顺序存储
 - 每个tuple有一个id（page_id+offset）
 ### 7.2 变长记录 

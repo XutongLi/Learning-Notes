@@ -43,6 +43,8 @@
 
 Linux内核使用 `Futex(fast user-space mutex)` ，它有两个组成部分：在user-space中的一个spin latch、OS级的mutex。DBMS优先获取user-space latch，若获取失败，进程切换入内核态并尝试获取更昂贵的mutex。如果获取mutex也失败，则线程通知OS它因申请锁而阻塞，OS将其放在一个等待队列中，等待调度器调度。
 
+[Futex](https://www.jianshu.com/p/d17a6152740c)
+
 #### 3.2.2. Test-and-Set Spin Latch (TAS)
 
 使用CPU提供的CAS指令对进程空间中的值进行判断，不会像mutex一样进行线程状态切换（用户态->内核态），速度很快。如果CAS失败，则通过一个while循环尝试继续更新。循环中也可实现为满足某条件时挂起让其他线程执行或退出。

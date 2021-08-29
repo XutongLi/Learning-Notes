@@ -63,7 +63,7 @@ DBMS可以根据query plan进行page的预取。
 ### 4.1 LRU (LEAST_RECENTLY USED)
 
 - 为每个page维护一个最近被使用的timestamp
-- 需要提出page时，选择具有最老timestamp的page
+- 需要剔除page时，选择具有最老timestamp的page
 - 常规实现时map+bi-list，map由key映射value和指向bi-list的节点的指针，bi-list中存储key
   - 访问时，将bi-list中该节点删除，添加在bi-list头部，map中该key的指针指向头部
   - 剔除时，删除bi-list尾节点，将map中对应key删除
@@ -82,6 +82,6 @@ LRU和CLOCK的问题：它们易遭受sequential flooding的影响，在顺序�
 
 解决sequential flooding问题的方法：
 
-- **LRU-K**：跟踪每个page最近K个引用的历史记录作为 timestamp，比计算访问之间的间隔。此历史记录用于预测下一次将要访问page的时间。
+- **LRU-K**：跟踪每个page最近K个引用的历史记录作为 timestamp，以计算访问之间的间隔。此历史记录用于预测下一次将要访问page的时间。
 - **Localization**：DBMS根据每个txn/query选择哪些page被剔除，这样可以最小化每次query对于buffer pool的污染。如Postgres对每个query维护一个private ring buffer。
 - **Priority Hints**：允许事务在查询执行期间根据每个page的上下文告诉buffer pool该page是否重要

@@ -46,7 +46,7 @@ DBMS包含一个Lock Manager，用于决定一个事务是否可以获得一个l
 
 ![image](https://user-images.githubusercontent.com/29897667/126894036-3c723c5f-5e3a-4dc4-8b4e-7911ba832725.png)
 
-2PL本身保证conflict serializable，它会生成precedence graph无欢的schedules。但是它存在**cascading aborts** 的问题，当一个txn abort的时候，另一个txn也必须roll back。
+2PL本身保证conflict serializable，它会生成precedence graph无环的schedules。但是它存在**cascading aborts** 的问题，当一个txn abort的时候，另一个txn也必须roll back。
 
 ![image](https://user-images.githubusercontent.com/29897667/126893990-e813b6ee-f791-40d5-bff5-f6dae2199125.png)
 
@@ -120,8 +120,8 @@ DBMS会使用一个后台线程来进行死锁检测，创建一个 **wait-for g
 
 **一些规则**：
 
-- 若在一个节点上获取S或IS，则txn必须获取费节点上的IS
-- 若在一个节点上获取X或IX或SIX，则txn必须获取费节点上的IS
+- 若在一个节点上获取S或IS，则txn必须获取父节点上的IS
+- 若在一个节点上获取X或IX或SIX，则txn必须获取父节点上的IX
 
 ![image](https://user-images.githubusercontent.com/29897667/126908803-f90b2094-3a04-4dc5-9c14-5bc7cda70d8d.png)
 

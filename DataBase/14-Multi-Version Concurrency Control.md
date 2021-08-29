@@ -1,5 +1,7 @@
 # Multi-Version Concurrency Control
 
+[MySQL MVCC](https://blog.csdn.net/SnailMann/article/details/94724197)
+
 ## 1. MVCC
 
 MVCC不仅是一个并发控制协议，更是影响了DBMS管理事务和DB的方式。
@@ -12,7 +14,7 @@ DBMS为一个**逻辑对象**维护多个**物理版本**：
 **关键特征**：
 
 - writer不会阻塞reader
-- reader不会组设writer
+- reader不会阻塞writer
 - 只读事务可以在不加lock的情况下读一个一致性的snapshot
 - timestamp用于确定可视性
 - DBMS可通过MVCC支持**时序查询 (time-travel queries)**
